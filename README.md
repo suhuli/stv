@@ -19,11 +19,7 @@
 
 ## 🚀 快速部署
 
-选择以下任一平台，点击一键部署按钮，即可快速创建自己的私人TV 实例：
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsuhuli%2Fstv)  
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/suhuli/stv)  
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/suhuli/stv)
+通过 Cloudflare Pages 部署，即可快速创建自己的私人TV 实例。
 
 ## 🚨 重要声明
 
@@ -49,66 +45,6 @@
    - 输出目录：留空（默认为根目录）
 5. **⚠️ 重要：在"设置" > "环境变量"中添加 `PASSWORD` 变量（必须设置）**
 6. 点击"保存并部署"
-
-### Vercel
-
-1. 克隆本仓库到您的 GitHub/GitLab 账户
-2. 登录 [Vercel](https://vercel.com/)，点击"New Project"
-3. 导入您的仓库，使用默认设置
-4. **⚠️ 重要：在"Settings" > "Environment Variables"中添加 `PASSWORD` 变量（必须设置）**
-5. 点击"Deploy"
-
-
-### Docker
-```
-docker run -d \
-  --name stv \
-  --restart unless-stopped \
-  -p 8899:8080 \
-  -e PASSWORD=your_password \
-  stv:latest
-```
-
-### Docker Compose
-
-`docker-compose.yml` 文件：
-
-```yaml
-services:
-  stv:
-    build: .
-    container_name: stv
-    ports:
-      - "8899:8080" # 将内部 8080 端口映射到主机的 8899 端口
-    environment:
-      - PASSWORD=${PASSWORD:-111111} # 可将 111111 修改为你想要的密码，默认为 your_password
-    restart: unless-stopped
-```
-启动私人TV：
-
-```bash
-docker compose up -d
-```
-访问 `http://localhost:8899` 即可使用。
-
-### 本地开发环境
-
-项目包含后端代理功能，需要支持服务器端功能的环境：
-
-```bash
-# 首先，通过复制示例来设置 .env 文件（可选）
-cp .env.example .env
-
-# 安装依赖
-npm install
-
-# 启动开发服务器
-npm run dev
-```
-
-访问 `http://localhost:8080` 即可使用（端口可在.env文件中通过PORT变量修改）。
-
-> ⚠️ 注意：使用简单静态服务器（如 `python -m http.server` 或 `npx http-server`）时，视频代理功能将不可用，视频无法正常播放。完整功能测试请使用 Node.js 开发服务器。
 
 ## 🔧 自定义配置
 
@@ -144,7 +80,7 @@ npm run dev
 - Tailwind CSS
 - HLS.js 用于 HLS 流处理
 - DPlayer 视频播放器核心
-- Cloudflare/Vercel/Netlify Serverless Functions
+- Cloudflare Pages Functions
 - 服务端 HLS 代理和处理技术
 - localStorage 本地存储
 
