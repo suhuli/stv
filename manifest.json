@@ -1,0 +1,18 @@
+{
+    "name": "私人TV",
+    "short_name": "私人TV",
+    "description": "私人视频查看系统",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0f1622",
+    "theme_color": "#000000",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black",
+    "icons": [
+      {
+        "src": "image/private-tv-mark.svg",
+        "sizes": "512x512",
+        "type": "image/svg+xml"
+      }
+    ]
+  }

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">私人TV</title>
+  <desc id="desc">私人TV 图标</desc>
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00ccff"/>
+      <stop offset="1" stop-color="#f43f7a"/>
+    </linearGradient>
+  </defs>
+  <rect x="72" y="92" width="368" height="328" rx="54" fill="none" stroke="url(#brand)" stroke-width="28"/>
+  <path d="M218 174v164l130-82z" fill="url(#brand)"/>
+</svg>
