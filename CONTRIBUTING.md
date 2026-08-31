@@ -12,9 +12,9 @@
 
 ### 本地开发设置
 
-1. **Fork 项目**
+1. **创建开发分支**
    ```bash
-   # 通过 GitHub 网页 Fork 本项目到您的账户
+   git switch -c feature/your-change
    ```
 
 2. **克隆仓库**

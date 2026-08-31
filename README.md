@@ -32,24 +32,16 @@
 - 如因公开分享导致的任何法律问题，用户需自行承担责任
 - 项目开发者不对用户的使用行为承担任何法律责任
 
-## ⚠️ 同步与升级
+## ⚠️ 升级说明
 
-Pull Bot 会反复触发无效的 PR 和垃圾邮件，严重干扰项目维护。作者可能会直接拉黑所有 Pull Bot 自动发起的同步请求的仓库所有者。
-
-**推荐做法：**
-
-建议在 fork 的仓库中启用本仓库自带的 GitHub Actions 自动同步功能（见 `.github/workflows/sync.yml`）。 
-
-如需手动同步主仓库更新，也可以使用 GitHub 官方的 [Sync fork](https://docs.github.com/cn/github/collaborating-with-issues-and-pull-requests/syncing-a-fork) 功能。
-
-对于更新后可能会出现的错误和异常，在设置中备份配置后，首先清除页面Cookie，然后 Ctrl + F5 刷新页面。再次访问网页检查是否解决问题。
+本仓库独立维护，不会自动同步或合并其他仓库的更新。升级前建议先在设置中导出配置；升级后如遇缓存问题，请清除页面 Cookie 并使用 Ctrl + F5 强制刷新。
 
 
 ## 📋 详细部署指南
 
 ### Cloudflare Pages
 
-1. Fork 或克隆本仓库到您的 GitHub 账户
+1. 克隆本仓库到您的 GitHub 账户
 2. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)，进入 Pages 服务
 3. 点击"创建项目"，连接您的 GitHub 仓库
 4. 使用以下设置：
@@ -60,7 +52,7 @@ Pull Bot 会反复触发无效的 PR 和垃圾邮件，严重干扰项目维护�
 
 ### Vercel
 
-1. Fork 或克隆本仓库到您的 GitHub/GitLab 账户
+1. 克隆本仓库到您的 GitHub/GitLab 账户
 2. 登录 [Vercel](https://vercel.com/)，点击"New Project"
 3. 导入您的仓库，使用默认设置
 4. **⚠️ 重要：在"Settings" > "Environment Variables"中添加 `PASSWORD` 变量（必须设置）**
