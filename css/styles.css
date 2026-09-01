@@ -634,7 +634,8 @@ body {
 /* 历史记录面板样式 */
 .history-panel {
     box-shadow: 2px 0 10px rgba(0,0,0,0.5);
-    transition: transform 0.3s ease-in-out;
+    translate: -100%;
+    transition: translate 0.3s ease-in-out;
     overflow-y: scroll; /* 始终显示滚动条，防止宽度变化 */
     overflow-x: hidden; /* 防止水平滚动 */
     width: 320px; /* 固定宽度 */
@@ -643,7 +644,7 @@ body {
 }
 
 .history-panel.show {
-    transform: translateX(0);
+    translate: 0;
 }
 
 #historyList {

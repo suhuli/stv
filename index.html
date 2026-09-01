@@ -20,7 +20,7 @@
 <body class="page-bg text-white">
     <!-- 将历史记录按钮移到左上角，并缩小尺寸 -->
     <div class="fixed top-4 left-4 z-10">
-        <button onclick="toggleHistory(event)" class="bg-[#222] hover:bg-[#333] border border-[#333] hover:border-white rounded-lg px-3 py-1.5 transition-colors" aria-label="观看历史">
+        <button id="historyOpenButton" class="bg-[#222] hover:bg-[#333] border border-[#333] hover:border-white rounded-lg px-3 py-1.5 transition-colors" aria-label="观看历史">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
@@ -40,7 +40,7 @@
     <!-- 历史记录面板 - 标题居中 -->
     <div id="historyPanel" class="history-panel fixed left-0 top-0 h-full bg-[#111] border-r border-[#333] p-6 z-40 transform -translate-x-full transition-transform duration-300" aria-label="观看历史" aria-hidden="true">
         <div class="flex justify-between items-center mb-6">
-                <button onclick="toggleHistory()" class="close-btn">
+                <button id="historyCloseButton" class="close-btn">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -387,19 +387,19 @@
     </script>
 
     <!-- 引入纯 JS sha256（HTTP 下依然可用） -->
-    <script src="libs/sha256.min.js"></script>
-    <script>
+    <script data-cfasync="false" src="libs/sha256.min.js"></script>
+    <script data-cfasync="false">
         // 保存原始 js‑sha256 实现，避免被 password.js 覆盖
         window._jsSha256 = window.sha256;
     </script>
-    <script src="js/config.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/douban.js"></script>
-    <script src="js/search.js"></script>
-    <script src="js/app.js"></script>
+    <script data-cfasync="false" src="js/config.js"></script>
+    <script data-cfasync="false" src="js/ui.js"></script>
+    <script data-cfasync="false" src="js/api.js"></script>
+    <script data-cfasync="false" src="js/douban.js"></script>
+    <script data-cfasync="false" src="js/search.js"></script>
+    <script data-cfasync="false" src="js/app.js"></script>
 
     <!-- 添加弹窗和URL搜索参数处理脚本 -->
-    <script src="js/index-page.js"></script>
+    <script data-cfasync="false" src="js/index-page.js"></script>
 </body>
 </html>

@@ -333,6 +333,31 @@ function toggleHistory(e) {
     }
 }
 
+function bindHistoryPanelControls() {
+    const openButton = document.getElementById('historyOpenButton');
+    const closeButton = document.getElementById('historyCloseButton');
+
+    if (openButton) {
+        openButton.addEventListener('click', function (e) {
+            e.stopPropagation();
+            toggleHistory(e);
+        });
+    }
+
+    if (closeButton) {
+        closeButton.addEventListener('click', function (e) {
+            e.stopPropagation();
+            toggleHistory(e);
+        });
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindHistoryPanelControls);
+} else {
+    bindHistoryPanelControls();
+}
+
 // 格式化时间戳为友好的日期时间格式
 function formatTimestamp(timestamp) {
     const date = new Date(timestamp);
