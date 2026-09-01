@@ -20,7 +20,10 @@ function toggleSettings(e) {
     // 阻止事件冒泡，防止触发document的点击事件
     e && e.stopPropagation();
     const panel = document.getElementById('settingsPanel');
-    panel.classList.toggle('show');
+    if (panel) {
+        panel.classList.toggle('show');
+        panel.removeAttribute('aria-hidden');
+    }
 }
 
 // 改进的Toast显示函数 - 支持队列显示多个Toast
@@ -319,6 +322,7 @@ function toggleHistory(e) {
     const panel = document.getElementById('historyPanel');
     if (panel) {
         panel.classList.toggle('show');
+        panel.removeAttribute('aria-hidden');
 
         // 如果打开了历史记录面板，则加载历史数据
         if (panel.classList.contains('show')) {
