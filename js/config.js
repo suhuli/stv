@@ -94,10 +94,6 @@ const API_SITES = {
         api: 'https://api.guangsuapi.com/api.php/provide/vod',
         name: '光速资源'
     },
-    qiqi: {
-        api: 'https://www.qiqidys.com/api.php/provide/vod',
-        name: '七七资源'
-    },
     testSource: {
         api: 'https://www.example.com/api.php/provide/vod',
         name: '空内容测试源',
