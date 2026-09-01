@@ -94,6 +94,22 @@ const API_SITES = {
         api: 'https://api.guangsuapi.com/api.php/provide/vod',
         name: '光速资源'
     },
+    xinlang: {
+        api: 'https://api.xinlangapi.com/xinlangapi.php/provide/vod',
+        name: '新浪资源'
+    },
+    haohua: {
+        api: 'https://hhzyapi.com/api.php/provide/vod',
+        name: '豪华资源'
+    },
+    xigua: {
+        api: 'https://caiji.xgzyapi.com/api.php/provide/vod',
+        name: '西瓜资源'
+    },
+    maoyan: {
+        api: 'https://api.maoyanapi.top/api.php/provide/vod',
+        name: '猫眼资源'
+    },
     testSource: {
         api: 'https://www.example.com/api.php/provide/vod',
         name: '空内容测试源',
