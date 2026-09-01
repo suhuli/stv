@@ -453,6 +453,9 @@ function initPlayer(videoUrl) {
         autoMini: true,
         screenshot: true,
         setting: true,
+        lock: true,
+        fastForward: true,
+        autoOrientation: true,
         loop: false,
         flip: false,
         playbackRate: true,
@@ -531,6 +534,24 @@ function initPlayer(videoUrl) {
                 hls.on(Hls.Events.MANIFEST_PARSED, function () {
                     video.play().catch(e => {
                     });
+
+                    // 多档画质时在设置面板中添加画质选择器
+                    if (hls.levels && hls.levels.length > 1) {
+                        const qualityList = [{ html: '自动', default: true, level: -1 }];
+                        const sorted = [...hls.levels].map((l, i) => ({ ...l, _index: i })).sort((a, b) => (b.height || 0) - (a.height || 0));
+                        sorted.forEach(l => {
+                            const label = l.height ? `${l.height}p` : `${Math.round(l.bitrate / 1000)}kbps`;
+                            qualityList.push({ html: label, level: l._index });
+                        });
+                        art.setting.add({
+                            html: '画质',
+                            selector: qualityList,
+                            onSelect: function (item) {
+                                hls.currentLevel = item.level;
+                            },
+                        });
+                    }
+
                     setTimeout(() => {
                         if (hls && !hls.destroyed) {
                             hls.currentLevel = -1;
@@ -589,6 +610,20 @@ function initPlayer(videoUrl) {
             }
         }
     });
+
+    // 控制栏添加下一集按钮
+    if (art && art.controls) {
+        art.controls.add({
+            name: 'next-episode-btn',
+            position: 'right',
+            index: 3,
+            html: '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>',
+            tooltip: '下一集',
+            click: function () {
+                playNextEpisode();
+            },
+        });
+    }
 
     // artplayer 没有 'fullscreenWeb:enter', 'fullscreenWeb:exit' 等事件
     // 所以原控制栏隐藏代码并没有起作用
