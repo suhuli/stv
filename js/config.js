@@ -79,7 +79,7 @@ const API_SITES = {
         name: '虎牙资源'
     },
     subo: {
-        api: 'https://subocaiji.com/api.php/provide/vod',
+        api: 'https://subocj.com/api.php/provide/vod',
         name: '速播资源'
     },
     ukzy: {
