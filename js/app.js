@@ -620,6 +620,7 @@ let lastSearchTriggeredAt = 0;
 function createSearchResultCard(item) {
     const safeId = item.vod_id ? item.vod_id.toString().replace(/[^\w-]/g, '') : '';
     const safePic = (item.vod_pic || '').toString()
+        .replace(/^http:\/\//i, 'https://')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
