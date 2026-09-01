@@ -866,6 +866,11 @@ function clearSearchInput() {
 // 劫持搜索框的value属性以检测外部修改
 function hookInput() {
     const input = document.getElementById('searchInput');
+    const existingDescriptor = Object.getOwnPropertyDescriptor(input, 'value');
+    if (existingDescriptor && existingDescriptor.get && existingDescriptor.set) {
+        return;
+    }
+
     const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
 
     // 重写 value 属性的 getter 和 setter

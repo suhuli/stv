@@ -338,17 +338,17 @@ function bindHistoryPanelControls() {
     const closeButton = document.getElementById('historyCloseButton');
 
     if (openButton) {
-        openButton.addEventListener('click', function (e) {
+        openButton.onclick = function (e) {
             e.stopPropagation();
             toggleHistory(e);
-        });
+        };
     }
 
     if (closeButton) {
-        closeButton.addEventListener('click', function (e) {
+        closeButton.onclick = function (e) {
             e.stopPropagation();
             toggleHistory(e);
-        });
+        };
     }
 }
 
