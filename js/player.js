@@ -415,8 +415,8 @@ function initPlayer(videoUrl) {
         enableWorker: true,
         lowLatencyMode: false,
         backBufferLength: 90,
-        maxBufferLength: 30,
-        maxMaxBufferLength: 60,
+        maxBufferLength: 60,
+        maxMaxBufferLength: 120,
         maxBufferSize: 30 * 1000 * 1000,
         maxBufferHole: 0.5,
         fragLoadingMaxRetry: 6,
@@ -426,8 +426,9 @@ function initPlayer(videoUrl) {
         manifestLoadingRetryDelay: 1000,
         levelLoadingMaxRetry: 4,
         levelLoadingRetryDelay: 1000,
-        startLevel: -1,
-        abrEwmaDefaultEstimate: 500000,
+        startFragPrefetch: true,
+        startLevel: 0,
+        abrEwmaDefaultEstimate: 1000000,
         abrBandWidthFactor: 0.95,
         abrBandWidthUpFactor: 0.7,
         abrMaxWithRealBitrate: true,
@@ -465,7 +466,7 @@ function initPlayer(videoUrl) {
         playsInline: true,
         autoPlayback: false,
         airplay: true,
-        hotkey: false,
+        hotkey: true,
         theme: '#23ade5',
         lang: navigator.language.toLowerCase(),
         moreVideoAttr: {
@@ -499,6 +500,7 @@ function initPlayer(videoUrl) {
                     playbackStarted = true;
                     document.getElementById('player-loading').style.display = 'none';
                     document.getElementById('error').style.display = 'none';
+                    preloadNextEpisode();
                 });
 
                 // 监听视频进度事件
@@ -529,6 +531,11 @@ function initPlayer(videoUrl) {
                 hls.on(Hls.Events.MANIFEST_PARSED, function () {
                     video.play().catch(e => {
                     });
+                    setTimeout(() => {
+                        if (hls && !hls.destroyed) {
+                            hls.currentLevel = -1;
+                        }
+                    }, 3000);
                 });
 
                 hls.on(Hls.Events.ERROR, function (event, data) {
@@ -786,6 +793,11 @@ class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
 function filterAdsFromM3U8(m3u8Content, strictMode = false) {
     if (!m3u8Content) return '';
 
+    // 加密流不移除任何标记，避免破坏 AES-128 解密序列
+    if (m3u8Content.includes('#EXT-X-KEY')) {
+        return m3u8Content;
+    }
+
     // 按行分割M3U8内容
     const lines = m3u8Content.split('\n');
     const filteredLines = [];
@@ -800,6 +812,17 @@ function filterAdsFromM3U8(m3u8Content, strictMode = false) {
     }
 
     return filteredLines.join('\n');
+}
+
+// 预加载下一集的 m3u8，减少切换等待
+function preloadNextEpisode() {
+    const nextIndex = currentEpisodeIndex + 1;
+    if (nextIndex < currentEpisodes.length) {
+        const nextUrl = currentEpisodes[nextIndex];
+        if (nextUrl && nextUrl.startsWith('http')) {
+            fetch(nextUrl).catch(() => {});
+        }
+    }
 }
 
 
