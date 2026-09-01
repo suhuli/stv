@@ -618,6 +618,10 @@ let currentSearchToken = 0;
 // 搜索结果卡片模板（含XSS转义）
 function createSearchResultCard(item) {
     const safeId = item.vod_id ? item.vod_id.toString().replace(/[^\w-]/g, '') : '';
+    const safePic = (item.vod_pic || '').toString()
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     const safeName = (item.vod_name || '').toString()
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -637,9 +641,9 @@ function createSearchResultCard(item) {
             <div class="flex h-full">
                 ${hasCover ? `
                 <div class="relative flex-shrink-0 search-card-img-container">
-                    <img src="${item.vod_pic}" alt="${safeName}"
+                    <img src="${safePic}" alt="${safeName}"
                          class="h-full w-full object-cover transition-transform hover:scale-110"
-                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450?text=无封面'; this.classList.add('object-contain');"
+                         onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('bg-[#222]');"
                          loading="lazy">
                     <div class="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent"></div>
                 </div>` : ''}
