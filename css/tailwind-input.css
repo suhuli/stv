@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@source "../index.html";
+@source "../player.html";
+@source "../about.html";
+@source "../watch.html";
+@source "../js/**/*.js";
