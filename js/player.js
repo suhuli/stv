@@ -454,7 +454,6 @@ function initPlayer(videoUrl) {
         screenshot: true,
         setting: true,
         lock: true,
-        fastForward: true,
         autoOrientation: true,
         loop: false,
         flip: false,
@@ -610,20 +609,6 @@ function initPlayer(videoUrl) {
             }
         }
     });
-
-    // 控制栏添加下一集按钮
-    if (art && art.controls) {
-        art.controls.add({
-            name: 'next-episode-btn',
-            position: 'right',
-            index: 3,
-            html: '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>',
-            tooltip: '下一集',
-            click: function () {
-                playNextEpisode();
-            },
-        });
-    }
 
     // artplayer 没有 'fullscreenWeb:enter', 'fullscreenWeb:exit' 等事件
     // 所以原控制栏隐藏代码并没有起作用
