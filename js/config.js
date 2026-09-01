@@ -47,7 +47,6 @@ const API_SITES = {
     hong: {
         api: 'https://www.hongniuzy2.com/api.php/provide/vod',
         name: '红牛资源',
-        detail: 'https://www.hongniuzy.com',
     },
     zy360: {
         api: 'https://360zy.com/api.php/provide/vod',
