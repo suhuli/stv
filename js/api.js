@@ -151,10 +151,26 @@ async function handleApiRequest(url) {
                 if (videoDetail.vod_play_url) {
                     // 分割不同播放源
                     const playSources = videoDetail.vod_play_url.split('$$$');
-                    
-                    // 提取第一个播放源的集数（通常为主要源）
-                    if (playSources.length > 0) {
-                        const mainSource = playSources[0];
+
+                    // 优先选择包含 m3u8 的播放源
+                    let mainSource = null;
+                    for (const source of playSources) {
+                        const epUrls = source.split('#').map(ep => {
+                            const parts = ep.split('$');
+                            return parts.length > 1 ? parts[1] : '';
+                        }).filter(url => url && url.includes('.m3u8'));
+                        if (epUrls.length > 0) {
+                            mainSource = source;
+                            break;
+                        }
+                    }
+
+                    // 如果没有 m3u8 源，回退到第一个源
+                    if (!mainSource && playSources.length > 0) {
+                        mainSource = playSources[0];
+                    }
+
+                    if (mainSource) {
                         const episodeList = mainSource.split('#');
                         
                         // 从每个集数中提取URL
