@@ -112,6 +112,7 @@ async function searchByAPIAndKeyWord(apiId, query, externalSignal) {
                             api_url: apiId.startsWith('custom_') ? getCustomApiInfo(apiId.replace('custom_', ''))?.url : undefined
                         }));
                     } catch (error) {
+                        if (error && error.name === 'AbortError') return [];
                         console.warn(`API ${apiId} 第${page}页搜索失败:`, error);
                         return [];
                     }
@@ -133,6 +134,7 @@ async function searchByAPIAndKeyWord(apiId, query, externalSignal) {
 
         return results;
     } catch (error) {
+        if (error && error.name === 'AbortError') return [];
         console.warn(`API ${apiId} 搜索失败:`, error);
         return [];
     }

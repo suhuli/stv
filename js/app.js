@@ -614,6 +614,7 @@ function getCustomApiInfo(customApiIndex) {
 // 搜索取消控制
 let currentSearchAbortController = null;
 let currentSearchToken = 0;
+let lastSearchTriggeredAt = 0;
 
 // 搜索结果卡片模板（含XSS转义）
 function createSearchResultCard(item) {
@@ -706,6 +707,11 @@ async function search() {
         showToast('请至少选择一个API源', 'warning');
         return;
     }
+
+    // Rocket Loader or IMEs can trigger the same search twice in quick succession.
+    const now = Date.now();
+    if (now - lastSearchTriggeredAt < 500) return;
+    lastSearchTriggeredAt = now;
 
     // 取消上一次未完成的搜索
     if (currentSearchAbortController) {
