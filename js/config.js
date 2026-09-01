@@ -44,10 +44,10 @@ const API_SITES = {
         name: '非凡影视',
         detail: 'http://ffzy5.tv',
     },
-    heimuer: {
-        api: 'https://json.heimuer.xyz/api.php/provide/vod',
-        name: '黑木耳',
-        detail: 'https://heimuer.tv',
+    hong: {
+        api: 'https://www.hongniuzy2.com/api.php/provide/vod',
+        name: '红牛资源',
+        detail: 'https://www.hongniuzy.com',
     },
     zy360: {
         api: 'https://360zy.com/api.php/provide/vod',
@@ -61,9 +61,9 @@ const API_SITES = {
         api: 'https://wolongzyw.com/api.php/provide/vod',
         name: '卧龙资源',
     },
-    hwba: {
-        api: 'https://cjhwba.com/api.php/provide/vod',
-        name: '华为吧资源',
+    snzy: {
+        api: 'https://suoniapi.com/api.php/provide/vod',
+        name: '索尼资源',
     },
     jisu: {
         api: 'https://jszyapi.com/api.php/provide/vod',
@@ -71,12 +71,12 @@ const API_SITES = {
         detail: 'https://jszyapi.com',
     },
     dbzy: {
-        api: 'https://dbzy.tv/api.php/provide/vod',
+        api: 'https://caiji.dbzy5.com/api.php/provide/vod/',
         name: '豆瓣资源',
     },
-    mozhua: {
-        api: 'https://mozhuazy.com/api.php/provide/vod',
-        name: '魔爪资源',
+    okzy: {
+        api: 'https://suonizy.net/api.php/provide/vod',
+        name: 'OK资源',
     },
     mdzy: {
         api: 'https://www.mdzyapi.com/api.php/provide/vod',
@@ -99,7 +99,7 @@ const API_SITES = {
         name: '无尽资源'
     },
     wwzy: {
-        api: 'https://wwzy.tv/api.php/provide/vod',
+        api: 'https://tyyszyapi.com/api.php/provide/vod',
         name: '旺旺短剧'
     },
     ikun: {
@@ -118,17 +118,17 @@ const API_SITES = {
         api: 'https://subocaiji.com/api.php/provide/vod',
         name: '速播资源'
     },
-    xiaomaomi: {
-        api: 'https://zy.xiaomaomi.cc/api.php/provide/vod',
-        name: '小猫咪资源'
+    ukzy: {
+        api: 'https://api.ukuapi88.com/api.php/provide/vod',
+        name: 'U酷资源'
     },
-    fczy: {
-        api: 'https://api.fczy888.me/api.php/provide/vod',
-        name: '蜂巢资源'
+    jyzy: {
+        api: 'https://jyzyapi.com/provide/vod',
+        name: '金鹰资源'
     },
-    dbzyCom: {
-        api: 'https://dbzy.com/api.php/provide/vod',
-        name: '豆瓣资源（旧域名）'
+    gszy: {
+        api: 'https://api.guangsuapi.com/api.php/provide/vod',
+        name: '光速资源'
     },
     testSource: {
         api: 'https://www.example.com/api.php/provide/vod',
