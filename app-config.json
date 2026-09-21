@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "appName": "私人TV",
+  "announcement": "",
+  "search": {
+    "concurrency": 4,
+    "timeoutMs": 10000,
+    "defaultMaxPages": 1
+  },
+  "player": {
+    "minBufferSeconds": 30,
+    "maxBufferSeconds": 90,
+    "playbackStartBufferSeconds": 2,
+    "rebufferSeconds": 5,
+    "autoNext": true,
+    "seekStepSeconds": 10
+  },
+  "sources": [
+    {
+      "key": "dyttzy",
+      "name": "电影天堂资源",
+      "api": "https://caiji.dyttzyapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 1,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "ruyi",
+      "name": "如意资源",
+      "api": "https://cj.rycjapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 2,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "bfzy",
+      "name": "暴风资源",
+      "api": "https://bfzyapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 3,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "ffzy",
+      "name": "非凡影视",
+      "api": "https://ffzy5.tv/api.php/provide/vod",
+      "enabled": true,
+      "order": 4,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "hong",
+      "name": "红牛资源",
+      "api": "https://www.hongniuzy2.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 5,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "zy360",
+      "name": "360资源",
+      "api": "https://360zy.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 6,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "iqiyi",
+      "name": "iqiyi资源",
+      "api": "https://www.iqiyizyapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 7,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "jisu",
+      "name": "极速资源",
+      "api": "https://jszyapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 8,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "mdzy",
+      "name": "魔都资源",
+      "api": "https://www.mdzyapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 9,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "zuid",
+      "name": "最大资源",
+      "api": "https://api.zuidapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 10,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "wujin",
+      "name": "无尽资源",
+      "api": "https://api.wujinapi.me/api.php/provide/vod",
+      "enabled": true,
+      "order": 11,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "ikun",
+      "name": "iKun资源",
+      "api": "https://ikunzyapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 12,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "lzi",
+      "name": "量子资源站",
+      "api": "https://cj.lziapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 13,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "huya",
+      "name": "虎牙资源",
+      "api": "https://www.huyaapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 14,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "subo",
+      "name": "速播资源",
+      "api": "https://subocj.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 15,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "ukzy",
+      "name": "U酷资源",
+      "api": "https://api.ukuapi88.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 16,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "jyzy",
+      "name": "金鹰资源",
+      "api": "https://jyzyapi.com/provide/vod",
+      "enabled": true,
+      "order": 17,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "gszy",
+      "name": "光速资源",
+      "api": "https://api.guangsuapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 18,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "xinlang",
+      "name": "新浪资源",
+      "api": "https://api.xinlangapi.com/xinlangapi.php/provide/vod",
+      "enabled": true,
+      "order": 19,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "haohua",
+      "name": "豪华资源",
+      "api": "https://hhzyapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 20,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "xigua",
+      "name": "西瓜资源",
+      "api": "https://caiji.xgzyapi.com/api.php/provide/vod",
+      "enabled": true,
+      "order": 21,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    },
+    {
+      "key": "maoyan",
+      "name": "猫眼资源",
+      "api": "https://api.maoyanapi.top/api.php/provide/vod",
+      "enabled": true,
+      "order": 22,
+      "maxPages": 1,
+      "timeoutMs": 10000,
+      "headers": {}
+    }
+  ]
+}
