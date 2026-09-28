@@ -6,9 +6,13 @@
   "description": "私人视频查看系统",
   "author": "suhuli",
   "license": "Apache-2.0",
-  "scripts": {},
+  "scripts": {
+    "dev": "wrangler pages dev . --port 8788 --compatibility-date=2024-09-01",
+    "build:css": "tailwindcss -i css/tailwind-input.css -o css/tailwind.min.css --minify"
+  },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "wrangler": "^3.114.17"
   }
 }
