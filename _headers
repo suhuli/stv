@@ -25,3 +25,11 @@
   Cache-Control: public, max-age=0, must-revalidate
 /
   Cache-Control: public, max-age=0, must-revalidate
+
+# Early Hints（需在 Cloudflare 面板 Speed → Optimization → Protocol 开启）
+# Cloudflare 会把这些 Link 头以 103 提前发给浏览器，让 CSS / 播放器库在 HTML 生成期间就开始下载。
+# 注意：?v= 版本号由 scripts/bump-assets.mjs 自动同步。
+/
+  Link: </css/tailwind.min.css?v=202609281848>; rel=preload; as=style, </css/styles.css?v=202609281848>; rel=preload; as=style, </css/index.css?v=202609281848>; rel=preload; as=style, </js/app.js?v=202609281848>; rel=preload; as=script
+/player
+  Link: </css/tailwind.min.css?v=202609281848>; rel=preload; as=style, </css/styles.css?v=202609281848>; rel=preload; as=style, </css/player.css?v=202609281848>; rel=preload; as=style, </libs/hls.min.js?v=202609281848>; rel=preload; as=script; crossorigin, </libs/artplayer.min.js?v=202609281848>; rel=preload; as=script; crossorigin

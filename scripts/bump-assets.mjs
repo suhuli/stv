@@ -15,4 +15,13 @@ for (const f of files) {
     const after = before.replace(re, (_, a, file, _v, d) => `${a}${file}?v=${version}${d}`);
     if (after !== before) { fs.writeFileSync(p, after); console.log(`updated ${f}`); }
 }
+// _headers 里的 Early Hints Link 头也同步版本号
+{
+    const hp = path.join(ROOT, '_headers');
+    if (fs.existsSync(hp)) {
+        const before = fs.readFileSync(hp, 'utf8');
+        const after = before.replace(/(<\/(?:js|css|libs)\/[^>?]+)\?v=[^>]*>/g, `$1?v=${version}>`);
+        if (after !== before) { fs.writeFileSync(hp, after); console.log('updated _headers'); }
+    }
+}
 console.log(`asset version = ${version}`);
