@@ -776,6 +776,9 @@ function buildResultCard(group) {
         img.src = cover;
         img.alt = first.vod_name || '';
         img.loading = 'lazy';
+        img.decoding = 'async';
+        img.setAttribute('fetchpriority', 'low');   // 海报让位于接口请求和脚本
+        img.width = 100; img.height = 150;            // 与 .search-card-img-container 一致，避免布局跳动
         img.referrerPolicy = 'no-referrer';
         img.addEventListener('error', () => {
             img.style.display = 'none';

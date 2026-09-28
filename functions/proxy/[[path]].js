@@ -5,7 +5,13 @@
 // 路径格式：/proxy/<encodeURIComponent(目标URL)>
 //
 // 可选环境变量：
-//   API_CACHE_TTL     采集站 JSON / 普通文本的边缘缓存秒数，默认 600
+//   API_CACHE_TTL     采集站搜索 JSON / 普通文本的缓存秒数，默认 600
+//   DETAIL_CACHE_TTL  采集站详情（?ac=videolist&ids=）的缓存秒数，默认 1800
+//
+// 两级缓存：
+//   L1 = Cache API（caches.default，本机房，命中最快）
+//   L2 = fetch 的 cf.cacheTtl（Cloudflare CDN 主缓存，配合 Smart Tiered Cache 跨机房共享）
+//   响应头 X-Proxy-Cache 表示 L1，X-Upstream-Cache 表示 L2（cf-cache-status）。
 //   MEDIA_CACHE_TTL   图片等二进制资源的边缘缓存秒数，默认 86400
 //   M3U8_CACHE_TTL    重写后的 m3u8 缓存秒数，默认 300
 //   UPSTREAM_TIMEOUT  回源超时毫秒，默认 10000
@@ -40,7 +46,7 @@ const CORS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
     'Access-Control-Allow-Headers': '*',
-    'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges, X-Proxy-Cache'
+    'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges, X-Proxy-Cache, X-Upstream-Cache'
 };
 
 export async function onRequestOptions() {
@@ -85,9 +91,12 @@ export async function onRequest(context) {
         }
     }
 
-    // ---- 回源 ----
+    // ---- 回源（L2：Cloudflare CDN 缓存，跨机房共享）----
     try {
-        const upstream = await fetchUpstream(targetUrl, cfg, { range: rangeHeader });
+        const upstreamPath = new URL(targetUrl).pathname.toLowerCase();
+        const l2Ttl = rangeHeader ? 0 : guessTtl(targetUrl, upstreamPath, cfg);
+        const upstream = await fetchUpstream(targetUrl, cfg, { range: rangeHeader, cacheTtl: l2Ttl });
+        const upstreamCacheStatus = upstream.headers.get('cf-cache-status') || 'NONE';
 
         if (!upstream.ok && upstream.status !== 206) {
             const body = await upstream.text().catch(() => '');
@@ -96,7 +105,7 @@ export async function onRequest(context) {
         }
 
         const contentType = (upstream.headers.get('Content-Type') || '').toLowerCase();
-        const pathname = new URL(targetUrl).pathname.toLowerCase();
+        const pathname = upstreamPath;
 
         // ---- M3U8：读文本、重写、缓存 ----
         if (looksLikeM3u8(pathname, contentType)) {
@@ -109,7 +118,8 @@ export async function onRequest(context) {
                         ...CORS_HEADERS,
                         'Content-Type': 'application/vnd.apple.mpegurl',
                         'Cache-Control': `public, max-age=${cfg.m3u8Ttl}`,
-                        'X-Proxy-Cache': 'MISS'
+                        'X-Proxy-Cache': 'MISS',
+                        'X-Upstream-Cache': upstreamCacheStatus
                     }
                 });
                 waitUntil(cache.put(cacheKey, resp.clone()));
@@ -117,14 +127,14 @@ export async function onRequest(context) {
             }
             // 扩展名像 m3u8 但内容不是，按普通文本返回
             const textResp = new Response(text, { status: upstream.status, headers: upstream.headers });
-            return finalize(buildPassthrough(textResp, cfg.apiTtl, cache, cacheKey, waitUntil), request.method === 'HEAD');
+            return finalize(buildPassthrough(textResp, cfg.apiTtl, cache, cacheKey, waitUntil, upstreamCacheStatus), request.method === 'HEAD');
         }
 
         // ---- 其他内容：流式透传 ----
         const isBinary = MEDIA_CONTENT_TYPES.some(t => contentType.startsWith(t)) ||
             MEDIA_FILE_EXTENSIONS.some(ext => pathname.endsWith(ext));
-        const ttl = isBinary ? cfg.mediaTtl : cfg.apiTtl;
-        return finalize(buildPassthrough(upstream, ttl, cache, cacheKey, waitUntil), request.method === 'HEAD');
+        const ttl = isBinary ? cfg.mediaTtl : (isDetailRequest(targetUrl) ? cfg.detailTtl : cfg.apiTtl);
+        return finalize(buildPassthrough(upstream, ttl, cache, cacheKey, waitUntil, upstreamCacheStatus), request.method === 'HEAD');
 
     } catch (error) {
         const timeout = error && (error.name === 'TimeoutError' || error.name === 'AbortError');
@@ -186,7 +196,7 @@ export async function onRequest(context) {
         }
 
         log(`选择子列表 (bandwidth=${bestBandwidth}): ${bestVariantUrl}`);
-        const resp = await fetchUpstream(bestVariantUrl, cfg);
+        const resp = await fetchUpstream(bestVariantUrl, cfg, { cacheTtl: cfg.m3u8Ttl });
         if (!resp.ok) throw new Error(`子列表请求失败 ${resp.status}: ${bestVariantUrl}`);
         const variantText = await resp.text();
         if (!variantText.trim().startsWith('#EXTM3U')) {
@@ -219,6 +229,7 @@ function readConfig(env) {
     return {
         debug: env.DEBUG === 'true',
         apiTtl: int(env.API_CACHE_TTL, 600),
+        detailTtl: int(env.DETAIL_CACHE_TTL, 1800),
         mediaTtl: int(env.MEDIA_CACHE_TTL, int(env.CACHE_TTL, 86400)),
         m3u8Ttl: int(env.M3U8_CACHE_TTL, 300),
         upstreamTimeout: int(env.UPSTREAM_TIMEOUT, 10000),
@@ -282,7 +293,7 @@ function pickReferer(targetUrl) {
     return `${u.origin}/`;
 }
 
-async function fetchUpstream(targetUrl, cfg, { range } = {}) {
+async function fetchUpstream(targetUrl, cfg, { range, cacheTtl = 0 } = {}) {
     const headers = new Headers({
         'User-Agent': cfg.userAgents[Math.floor(Math.random() * cfg.userAgents.length)],
         'Accept': '*/*',
@@ -290,11 +301,31 @@ async function fetchUpstream(targetUrl, cfg, { range } = {}) {
         'Referer': pickReferer(targetUrl)
     });
     if (range) headers.set('Range', range);
-    return fetch(targetUrl, {
+    const init = {
         headers,
         redirect: 'follow',
         signal: AbortSignal.timeout(cfg.upstreamTimeout)
-    });
+    };
+    // L2：让子请求走 Cloudflare CDN 缓存（按上游 URL 作键；Range 请求不缓存）
+    if (cacheTtl > 0 && !range) {
+        init.cf = { cacheTtl, cacheEverything: true };
+    }
+    return fetch(targetUrl, init);
+}
+
+// 采集站详情请求：?ac=videolist&ids=… / ?ac=detail&ids=…
+function isDetailRequest(targetUrl) {
+    try {
+        const sp = new URL(targetUrl).searchParams;
+        return sp.has('ids') || sp.get('ac') === 'detail';
+    } catch (_) { return false; }
+}
+
+// 回源前按 URL 形态估算 L2 TTL（此时还没有 Content-Type）
+function guessTtl(targetUrl, pathname, cfg) {
+    if (/\.m3u8$/.test(pathname)) return cfg.m3u8Ttl;
+    if (MEDIA_FILE_EXTENSIONS.some(ext => pathname.endsWith(ext))) return cfg.mediaTtl;
+    return isDetailRequest(targetUrl) ? cfg.detailTtl : cfg.apiTtl;
 }
 
 function looksLikeM3u8(pathname, contentType) {
@@ -303,7 +334,7 @@ function looksLikeM3u8(pathname, contentType) {
 }
 
 // 构造流式透传响应；200 响应异步写入边缘缓存
-function buildPassthrough(upstream, ttl, cache, cacheKey, waitUntil) {
+function buildPassthrough(upstream, ttl, cache, cacheKey, waitUntil, upstreamCacheStatus) {
     const headers = new Headers(CORS_HEADERS);
     for (const name of PASSTHROUGH_HEADERS) {
         const v = upstream.headers.get(name);
@@ -311,6 +342,7 @@ function buildPassthrough(upstream, ttl, cache, cacheKey, waitUntil) {
     }
     headers.set('Cache-Control', `public, max-age=${ttl}`);
     headers.set('X-Proxy-Cache', 'MISS');
+    if (upstreamCacheStatus) headers.set('X-Upstream-Cache', upstreamCacheStatus);
 
     const resp = new Response(upstream.body, { status: upstream.status, headers });
     if (upstream.status === 200 && ttl > 0) {

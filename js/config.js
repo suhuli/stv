@@ -134,7 +134,7 @@ const API_CONFIG = {
         // 只拼接参数部分，不再包含 /api.php/provide/vod/
         path: '?ac=videolist&wd=',
         pagePath: '?ac=videolist&wd={query}&pg={page}',
-        maxPages: 5,          // 每个源最多拉取的分页数（含第一页）
+        maxPages: 3,          // 每个源最多拉取的分页数（含第一页）；第 3 页之后基本是边缘结果
         pageConcurrency: 2,   // 单个源分页请求的并发数
         timeout: 10000,       // 单次请求超时（毫秒）
         headers: {
