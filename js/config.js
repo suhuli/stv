@@ -123,10 +123,8 @@ window.extendAPISites = extendAPISites;
 
 // 添加聚合搜索的配置选项
 const AGGREGATED_SEARCH_CONFIG = {
-    enabled: true,             // 是否启用聚合搜索
-    timeout: 8000,            // 单个源超时时间（毫秒）
-    maxResults: 10000,          // 最大结果数量
-    parallelRequests: true,   // 是否并行请求所有源
+    enabled: true,            // 是否启用聚合搜索
+    sourceConcurrency: 6,     // 同时搜索的源数量
     showSourceBadges: true    // 是否显示来源徽章
 };
 
@@ -136,7 +134,9 @@ const API_CONFIG = {
         // 只拼接参数部分，不再包含 /api.php/provide/vod/
         path: '?ac=videolist&wd=',
         pagePath: '?ac=videolist&wd={query}&pg={page}',
-        maxPages: 50, // 最大获取页数
+        maxPages: 5,          // 每个源最多拉取的分页数（含第一页）
+        pageConcurrency: 2,   // 单个源分页请求的并发数
+        timeout: 10000,       // 单次请求超时（毫秒）
         headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'Accept': 'application/json'

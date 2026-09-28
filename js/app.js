@@ -774,20 +774,22 @@ async function search() {
             }
         }
 
-        // 并发限制的多源搜索
-        const MAX_CONCURRENT = 4;
+        // 并发限制的多源搜索；每个源的每一页结果到达后立即渲染
+        const MAX_CONCURRENT = (typeof AGGREGATED_SEARCH_CONFIG !== 'undefined' && AGGREGATED_SEARCH_CONFIG.sourceConcurrency) || 6;
         let nextIndex = 0;
+        const onBatch = (results) => {
+            if (signal.aborted) return;
+            if (Array.isArray(results) && results.length > 0) {
+                appendBatch(results);
+            }
+        };
 
         async function worker() {
             while (nextIndex < selectedAPIs.length) {
                 if (signal.aborted) return;
                 const apiId = selectedAPIs[nextIndex++];
                 try {
-                    const results = await searchByAPIAndKeyWord(apiId, query, signal);
-                    if (signal.aborted) return;
-                    if (Array.isArray(results) && results.length > 0) {
-                        appendBatch(results);
-                    }
+                    await searchByAPIAndKeyWord(apiId, query, signal, onBatch);
                 } catch (err) {
                     if (!signal.aborted) {
                         console.warn(`API ${apiId} 搜索失败:`, err);
