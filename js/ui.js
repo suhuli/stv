@@ -607,33 +607,23 @@ async function playFromHistory(url, title, episodeIndex, playbackPosition = 0) {
         }
 
 
-        // 如果在历史记录中没找到，尝试使用上一个会话的集数数据
+        // 历史记录里没有剧集列表时，至少让当前这一集可播
         if (episodesList.length === 0) {
             try {
-                const storedEpisodes = JSON.parse(localStorage.getItem('currentEpisodes') || '[]');
-                if (storedEpisodes.length > 0) {
-                    episodesList = storedEpisodes;
-                    // console.log(`使用localStorage中的集数数据:`, episodesList.length);
-                }
-            } catch (e) {
-                // console.error('解析currentEpisodes失败:', e);
-            }
+                const direct = (historyItem && historyItem.directVideoUrl) ||
+                    new URL(url, window.location.origin).searchParams.get('url');
+                if (direct) episodesList = [direct];
+            } catch (_) { /* 忽略 */ }
         }
 
-        // 将剧集列表保存到localStorage，播放器页面会读取它
-        if (episodesList.length > 0) {
-            localStorage.setItem('currentEpisodes', JSON.stringify(episodesList));
-            // console.log(`已将剧集列表保存到localStorage，共 ${episodesList.length} 集`);
-        }
-
-        // 保存当前页面URL作为返回地址
+        // 保存当前页面URL作为返回地址（按标签页）
         let currentPath;
         if (window.location.pathname.startsWith('/player.html') || window.location.pathname.startsWith('/watch.html')) {
-            currentPath = localStorage.getItem('lastPageUrl') || '/';
+            currentPath = (window.PlaySession && PlaySession.getReturnUrl()) || '/';
         } else {
             currentPath = window.location.origin + window.location.pathname + window.location.search;
         }
-        localStorage.setItem('lastPageUrl', currentPath);
+        if (window.PlaySession) PlaySession.setReturnUrl(currentPath);
 
         // 构造播放器URL
         let playerUrl;
@@ -675,6 +665,18 @@ async function playFromHistory(url, title, episodeIndex, playbackPosition = 0) {
             if (sourceCodeForUrl) playUrl.searchParams.set('source_code', sourceCodeForUrl);
             if (idForUrl) playUrl.searchParams.set('id', idForUrl);
             playerUrl = playUrl.toString();
+        }
+
+        // 为本次播放创建会话，播放页按 sid 取剧集列表
+        if (window.PlaySession && episodesList.length > 0) {
+            const session = PlaySession.create({
+                title,
+                sourceCode: sourceCodeForUrl || sourceNameForUrl || '',
+                vodId: idForUrl || '',
+                episodes: episodesList,
+                index: Math.min(Math.max(0, episodeIndex || 0), episodesList.length - 1)
+            });
+            playerUrl += (playerUrl.includes('?') ? '&' : '?') + 'sid=' + encodeURIComponent(session.id);
         }
 
         showVideoPlayer(playerUrl);

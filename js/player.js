@@ -16,8 +16,8 @@ function goBack(event) {
         return;
     }
     
-    // 2. 检查localStorage中保存的lastPageUrl
-    const lastPageUrl = localStorage.getItem('lastPageUrl');
+    // 2. 检查本标签页保存的返回地址
+    const lastPageUrl = window.PlaySession ? PlaySession.getReturnUrl() : '';
     if (lastPageUrl && lastPageUrl !== window.location.href) {
         window.location.href = lastPageUrl;
         return;
@@ -54,24 +54,18 @@ function goBack(event) {
     window.history.back();
 }
 
-// 页面加载时保存当前URL到localStorage，作为返回目标
+// 页面加载时记录返回目标（按标签页隔离）
 window.addEventListener('load', function () {
-    // 保存前一页面URL
-    if (document.referrer && document.referrer !== window.location.href) {
-        localStorage.setItem('lastPageUrl', document.referrer);
+    if (window.PlaySession && !PlaySession.getReturnUrl() &&
+        document.referrer && document.referrer !== window.location.href &&
+        !/player\.html/.test(document.referrer)) {
+        PlaySession.setReturnUrl(document.referrer);
     }
-
-    // 提取当前URL中的重要参数，以便在需要时能够恢复当前页面
-    const urlParams = new URLSearchParams(window.location.search);
-    const videoId = urlParams.get('id');
-    const sourceCode = urlParams.get('source');
-
-    if (videoId && sourceCode) {
-        // 保存当前播放状态，以便其他页面可以返回
-        localStorage.setItem('currentPlayingId', videoId);
-        localStorage.setItem('currentPlayingSource', sourceCode);
-    }
+    if (window.PlaySession) PlaySession.cleanupLegacyKeys();
 });
+
+// 当前播放会话 id（来自 URL 的 sid）
+let currentSessionId = '';
 
 
 // =================================
@@ -150,8 +144,11 @@ function initializePageContent() {
     // 保存当前视频URL
     currentVideoUrl = videoUrl || '';
 
-    // 从localStorage获取数据
-    currentVideoTitle = title || localStorage.getItem('currentVideoTitle') || '未知视频';
+    // 优先从播放会话读取（按 sid 隔离，多标签页互不影响）
+    currentSessionId = urlParams.get('sid') || '';
+    const session = currentSessionId && window.PlaySession ? PlaySession.get(currentSessionId) : null;
+
+    currentVideoTitle = (session && session.title) || title || '未知视频';
     currentEpisodeIndex = index;
 
     // 设置自动连播开关状态
@@ -167,16 +164,28 @@ function initializePageContent() {
         localStorage.setItem('autoplayEnabled', autoplayEnabled);
     });
 
-    // 优先使用URL传递的集数信息，否则从localStorage获取
+    // 剧集列表来源优先级：会话 > URL 内联 episodes > 仅当前 url
     try {
-        if (episodesList) {
-            // 如果URL中有集数数据，优先使用它
+        if (session && session.episodes && session.episodes.length) {
+            currentEpisodes = session.episodes;
+        } else if (episodesList) {
             currentEpisodes = JSON.parse(decodeURIComponent(episodesList));
-
         } else {
-            // 否则从localStorage获取
-            currentEpisodes = JSON.parse(localStorage.getItem('currentEpisodes') || '[]');
-
+            currentEpisodes = videoUrl ? [videoUrl] : [];
+        }
+        // 旧链接没有 sid：为本次播放补建一个会话，之后切集/换源都能跟踪
+        if (!session && window.PlaySession && currentEpisodes.length) {
+            const created = PlaySession.create({
+                title: currentVideoTitle,
+                sourceCode: sourceCode || urlParams.get('source_code') || '',
+                vodId: urlParams.get('id') || '',
+                episodes: currentEpisodes,
+                index
+            });
+            currentSessionId = created.id;
+            const u = new URL(window.location.href);
+            u.searchParams.set('sid', created.id);
+            window.history.replaceState({}, '', u);
         }
 
         // 检查集数索引是否有效，如果无效则调整为0
@@ -963,6 +972,9 @@ function playEpisode(index) {
     currentUrl.searchParams.delete('position');
     window.history.replaceState({}, '', currentUrl.toString());
 
+    // 同步到播放会话
+    if (currentSessionId && window.PlaySession) PlaySession.update(currentSessionId, { index });
+
     if (isWebkit) {
         initPlayer(url);
     } else {
@@ -1138,6 +1150,7 @@ function saveToHistory() {
         title: currentVideoTitle,
         directVideoUrl: currentVideoUrl, // Current episode's direct URL
         url: `player.html?url=${encodeURIComponent(currentVideoUrl)}&title=${encodeURIComponent(currentVideoTitle)}&source=${encodeURIComponent(sourceName)}&source_code=${encodeURIComponent(sourceCode)}&id=${encodeURIComponent(id_from_params || '')}&index=${currentEpisodeIndex}&position=${Math.floor(currentPosition || 0)}`,
+        sid: currentSessionId || '',
         episodeIndex: currentEpisodeIndex,
         sourceName: sourceName,
         vod_id: id_from_params || '', // Store the ID from params as vod_id in history item
@@ -1798,22 +1811,19 @@ async function switchToResource(sourceKey, vodId) {
         // 获取目标集数的URL
         const targetUrl = data.episodes[targetIndex];
         
-        // 构建播放页面URL
-        const watchUrl = `player.html?id=${vodId}&source=${sourceKey}&url=${encodeURIComponent(targetUrl)}&index=${targetIndex}&title=${encodeURIComponent(currentVideoTitle)}`;
-        
-        // 保存当前状态到localStorage
-        try {
-            localStorage.setItem('currentVideoTitle', data.vod_name || '未知视频');
-            localStorage.setItem('currentEpisodes', JSON.stringify(data.episodes));
-            localStorage.setItem('currentEpisodeIndex', targetIndex);
-            localStorage.setItem('currentSourceCode', sourceKey);
-            localStorage.setItem('lastPlayTime', Date.now());
-        } catch (e) {
-            console.error('保存播放状态失败:', e);
-        }
-
-        // 跳转到播放页面
-        window.location.href = watchUrl;
+        // 换源 = 新会话（沿用当前的返回地址）
+        const session = PlaySession.create({
+            title: data.vod_name || currentVideoTitle || '未知视频',
+            sourceCode: sourceKey,
+            vodId: vodId,
+            episodes: data.episodes,
+            index: targetIndex
+        });
+        void targetUrl;
+        window.location.href = PlaySession.buildPlayerUrl(session, {
+            index: targetIndex,
+            returnUrl: PlaySession.getReturnUrl() || undefined
+        });
         
     } catch (error) {
         console.error('切换资源失败:', error);

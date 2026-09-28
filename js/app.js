@@ -1238,33 +1238,28 @@ async function showDetails(id, vod_name, sourceCode) {
 
 // 更新播放视频函数，修改为使用/watch路径而不是直接打开player.html
 function playVideo(url, vod_name, sourceCode, episodeIndex = 0, vodId = '') {
+    // 返回地址：当前页面（含搜索参数）
+    const returnUrl = window.location.href;
+    PlaySession.setReturnUrl(returnUrl);
 
-    // 获取当前路径作为返回页面
-    let currentPath = window.location.href;
-
-    // 构建播放页面URL，使用watch.html作为中间跳转页
-    let watchUrl = `watch.html?id=${vodId || ''}&source=${sourceCode || ''}&url=${encodeURIComponent(url)}&index=${episodeIndex}&title=${encodeURIComponent(vod_name || '')}`;
-
-    // 添加返回URL参数
-    if (currentPath.includes('index.html') || currentPath.endsWith('/')) {
-        watchUrl += `&back=${encodeURIComponent(currentPath)}`;
+    // 剧集列表：优先当前详情弹窗的列表；若点击的 URL 不在其中，则以该 URL 单独成会话
+    let episodes = Array.isArray(currentEpisodes) && currentEpisodes.length ? currentEpisodes : [url];
+    let index = episodeIndex;
+    if (!episodes.includes(url)) {
+        episodes = [url];
+        index = 0;
     }
 
-    // 保存当前状态到localStorage
-    try {
-        localStorage.setItem('currentVideoTitle', vod_name || '未知视频');
-        localStorage.setItem('currentEpisodes', JSON.stringify(currentEpisodes));
-        localStorage.setItem('currentEpisodeIndex', episodeIndex);
-        localStorage.setItem('currentSourceCode', sourceCode || '');
-        localStorage.setItem('lastPlayTime', Date.now());
-        localStorage.setItem('lastSearchPage', currentPath);
-        localStorage.setItem('lastPageUrl', currentPath);  // 确保保存返回页面URL
-    } catch (e) {
-        console.error('保存播放状态失败:', e);
-    }
+    const session = PlaySession.create({
+        title: vod_name || '未知视频',
+        sourceCode: sourceCode || '',
+        vodId: vodId || '',
+        episodes,
+        index
+    });
 
-    // 在当前标签页中打开播放页面
-    window.location.href = watchUrl;
+    // 直接进入播放器（不再经过 watch.html 的 3 秒中转页）
+    window.location.href = PlaySession.buildPlayerUrl(session, { index, returnUrl });
 }
 
 // 弹出播放器页面
