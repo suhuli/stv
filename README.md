@@ -68,7 +68,7 @@
 | `USER_AGENTS_JSON` | 内置 Chrome UA | JSON 字符串数组，随机选用 |
 | `DEBUG` | `false` | 输出调试日志 |
 
-缓存基于 Cloudflare Cache API，不需要绑定 KV。
+缓存分两级：L1 为 Cloudflare Cache API（单机房），L2 为 CDN 主缓存（`fetch` 的 `cf.cacheTtl`，建议在 Cloudflare 面板 Caching → Tiered Cache 开启 Smart Tiered Cache 以跨机房共享）。不需要绑定 KV。响应头 `X-Proxy-Cache` / `X-Upstream-Cache` 分别表示两级命中情况。
 
 
 ### API兼容性
