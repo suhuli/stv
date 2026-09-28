@@ -1,17 +1,26 @@
 # Cloudflare Pages 静态资源缓存策略
-# 第三方库很少变动：浏览器缓存 7 天
+# 说明：本项目无构建步骤、文件名不带哈希，站点自身的 js/css 必须每次重新验证
+#       （命中时返回 304，开销极小），否则发版后用户会拿到新 HTML + 旧脚本/样式。
+
+# 第三方库（hls.js / ArtPlayer / sha256）很少变动：浏览器缓存 7 天
 /libs/*
   Cache-Control: public, max-age=604800, stale-while-revalidate=86400
 
-# 站点自身 JS/CSS/图片：1 小时，允许后台重新验证
+# 站点自身脚本与样式：每次验证
 /js/*
-  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Cache-Control: public, max-age=0, must-revalidate
 /css/*
-  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Cache-Control: public, max-age=0, must-revalidate
+
+# 图标等图片：1 天
 /image/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 
-# HTML 始终重新验证，保证发版即生效
+# 巡检数据：每次验证
+/data/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# HTML 始终重新验证
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
 /
