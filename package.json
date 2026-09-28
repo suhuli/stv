@@ -8,11 +8,14 @@
   "license": "Apache-2.0",
   "scripts": {
     "dev": "wrangler pages dev . --port 8788 --compatibility-date=2024-09-01",
-    "build:css": "tailwindcss -i css/tailwind-input.css -o css/tailwind.min.css --minify"
+    "build:css": "tailwindcss -i css/tailwind-input.css -o css/tailwind.min.css --minify",
+    "bump": "node scripts/bump-assets.mjs",
+    "health": "node scripts/check-sources.mjs"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3",
     "jsdom": "^29.1.1",
+    "playwright": "1.47",
     "tailwindcss": "^4.3.3",
     "wrangler": "^3.114.17"
   }
