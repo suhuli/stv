@@ -79,6 +79,7 @@
                     <button onclick="selectAllAPIs(true)" class="px-2 py-1 bg-[#333] hover:bg-[#444] text-white text-xs rounded">全选</button>
                     <button onclick="selectAllAPIs(false)" class="px-2 py-1 bg-[#333] hover:bg-[#444] text-white text-xs rounded">全不选</button>
                     <button onclick="selectAllAPIs(true, true)" class="px-2 py-1 bg-[#333] hover:bg-[#444] text-white text-xs rounded">全选普通资源</button>
+                    <button onclick="selectHealthyAPIs()" id="selectHealthyBtn" class="px-2 py-1 bg-green-800 hover:bg-green-700 text-white text-xs rounded" title="只勾选巡检可用的源">选择可用源</button>
                 </div>
                 
                 <!-- API选择区域 - 使用滚动区域 -->
@@ -156,6 +157,19 @@
                     </div>
                 </div>
                 
+                <!-- 同名结果聚合开关 -->
+                <div class="flex items-center justify-between mb-3 pb-3 border-b border-[#222]">
+                    <div>
+                        <label class="text-sm font-medium text-gray-400">聚合同名结果</label>
+                        <p class="text-xs text-gray-500 mt-1">多个源的同一部影片合并为一张卡片</p>
+                    </div>
+                    <div class="relative inline-block w-12 align-middle select-none">
+                        <input type="checkbox" id="aggregateToggle" class="opacity-0 absolute w-full h-full cursor-pointer z-10">
+                        <div class="toggle-bg bg-[#333] w-12 h-6 rounded-full transition-colors duration-300 ease-in-out"></div>
+                        <div class="toggle-dot absolute w-5 h-5 bg-white rounded-full top-0.5 left-0.5 transition-transform duration-300 ease-in-out"></div>
+                    </div>
+                </div>
+
                 <!-- 豆瓣热门开关 -->
                 <div class="flex items-center justify-between">
                     <div>
@@ -276,7 +290,7 @@
                 <div class="mx-auto max-w-7xl px-2"> <!-- 添加最大宽度限制并居中 -->
                     <div class="flex justify-end items-center mb-4">
                         <div class="text-sm text-gray-400">
-                            <span id="searchResultsCount">0</span> 个结果
+                            <span id="searchResultsCount">0</span> 个结果<span id="searchResultsSuffix" class="text-gray-500"></span>
                         </div>
                     </div>
                     <!-- 修改网格布局以适应大一些的横向卡片 -->
@@ -393,6 +407,7 @@
         window._jsSha256 = window.sha256;
     </script>
     <script data-cfasync="false" src="js/config.js"></script>
+    <script data-cfasync="false" src="js/source-health.js"></script>
     <script data-cfasync="false" src="js/ui.js"></script>
     <script data-cfasync="false" src="js/api.js"></script>
     <script data-cfasync="false" src="js/douban.js"></script>

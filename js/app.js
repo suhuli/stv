@@ -12,7 +12,12 @@ let currentVideoTitle = '';
 let episodesReversed = false;
 
 // 页面初始化
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
+    // 先尝试加载采集源健康数据（最多等 2.5 秒，失败不影响后续流程）
+    if (window.SourceHealth) {
+        try { await SourceHealth.load(2500); } catch (_) { /* 忽略 */ }
+    }
+
     // Migrate installs that lost their built-in source selection when the source list was emptied.
     if (!localStorage.getItem('builtinSourcesRestored') &&
         !selectedAPIs.some(apiKey => API_SITES[apiKey] && !API_SITES[apiKey].adult)) {
@@ -35,9 +40,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 设置默认API选择（如果是第一次加载）
     if (!localStorage.getItem('hasInitializedDefaults')) {
-        // 默认选中资源
-        selectedAPIs = ["tyyszy", "bfzy", "dyttzy", "ruyi"];
+        // 默认选中资源：优先使用巡检可用的源，没有巡检数据时退回固定列表
+        const builtinKeys = Object.keys(API_SITES).filter(k => !API_SITES[k].adult);
+        const recommended = window.SourceHealth && SourceHealth.data ? SourceHealth.recommendedKeys(builtinKeys, 6) : [];
+        selectedAPIs = recommended.length ? recommended : ["zy360", "hong", "mdzy", "iqiyi", "ikun", "xigua"].filter(k => API_SITES[k]);
         localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
+        initAPICheckboxes();
+        updateSelectedApiCount();
 
         // 默认选中过滤开关
         localStorage.setItem('yellowFilterEnabled', 'true');
@@ -54,6 +63,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const yellowFilterToggle = document.getElementById('yellowFilterToggle');
     if (yellowFilterToggle) {
         yellowFilterToggle.checked = localStorage.getItem('yellowFilterEnabled') === 'true';
+    }
+
+    // 聚合开关初始状态
+    const aggregateToggle = document.getElementById('aggregateToggle');
+    if (aggregateToggle) {
+        aggregateToggle.checked = isAggregateEnabled();
+        aggregateToggle.addEventListener('change', function (e) {
+            localStorage.setItem('aggregateResultsEnabled', e.target.checked ? 'true' : 'false');
+            const resultsArea = document.getElementById('resultsArea');
+            if (resultsArea && !resultsArea.classList.contains('hidden')) {
+                rerenderSearchResults();
+            }
+        });
     }
 
     // 设置广告过滤开关初始状态
@@ -91,14 +113,20 @@ function initAPICheckboxes() {
         const checked = selectedAPIs.includes(apiKey);
 
         const checkbox = document.createElement('div');
-        checkbox.className = 'flex items-center';
-        checkbox.innerHTML = `
-            <input type="checkbox" id="api_${apiKey}" 
-                   class="form-checkbox h-3 w-3 text-blue-600 bg-[#222] border border-[#333]" 
-                   ${checked ? 'checked' : ''} 
-                   data-api="${apiKey}">
-            <label for="api_${apiKey}" class="ml-1 text-xs text-gray-400 truncate">${api.name}</label>
-        `;
+        checkbox.className = 'flex items-center min-w-0';
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.id = `api_${apiKey}`;
+        input.className = 'form-checkbox h-3 w-3 text-blue-600 bg-[#222] border border-[#333] flex-shrink-0';
+        input.checked = checked;
+        input.dataset.api = apiKey;
+        const label = document.createElement('label');
+        label.htmlFor = input.id;
+        label.className = 'ml-1 text-xs text-gray-400 truncate';
+        label.textContent = api.name;
+        checkbox.appendChild(input);
+        checkbox.appendChild(label);
+        if (window.SourceHealth) checkbox.appendChild(SourceHealth.badge(apiKey));
         normaldiv.appendChild(checkbox);
 
         // 添加事件监听器
@@ -108,6 +136,13 @@ function initAPICheckboxes() {
         });
     });
     container.appendChild(normaldiv);
+
+    // 显示巡检时间
+    const siteStatus = document.getElementById('siteStatus');
+    if (siteStatus && window.SourceHealth) {
+        const at = SourceHealth.generatedAt();
+        siteStatus.textContent = at ? `源巡检：${at.toLocaleDateString()}` : '';
+    }
 
     // 添加成人API列表
     addAdultAPI();
@@ -370,6 +405,26 @@ function updateSelectedApiCount() {
 }
 
 // 全选或取消全选API
+// 只勾选巡检可用的内置源（保留已勾选的自定义源）
+function selectHealthyAPIs() {
+    if (!window.SourceHealth || !SourceHealth.data) {
+        showToast('暂无巡检数据，请稍后再试', 'warning');
+        return;
+    }
+    const builtinKeys = Object.keys(API_SITES).filter(k => !API_SITES[k].adult);
+    const healthy = SourceHealth.recommendedKeys(builtinKeys, 6);
+    const custom = selectedAPIs.filter(k => k.startsWith('custom_'));
+    document.querySelectorAll('#apiCheckboxes input[type="checkbox"]').forEach(cb => {
+        if (cb.dataset.api) cb.checked = healthy.includes(cb.dataset.api);
+    });
+    selectedAPIs = healthy.concat(custom);
+    localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
+    updateSelectedApiCount();
+    checkAdultAPIsSelected();
+    const at = SourceHealth.generatedAt();
+    showToast(`已选择 ${healthy.length} 个可用源${at ? `（巡检于 ${at.toLocaleDateString()}）` : ''}`, 'success');
+}
+
 function selectAllAPIs(selectAll = true, excludeAdult = false) {
     const checkboxes = document.querySelectorAll('#apiCheckboxes input[type="checkbox"]');
 
@@ -616,64 +671,270 @@ let currentSearchAbortController = null;
 let currentSearchToken = 0;
 let lastSearchTriggeredAt = 0;
 
-// 搜索结果卡片模板（含XSS转义）
-function createSearchResultCard(item) {
-    const safeId = item.vod_id ? item.vod_id.toString().replace(/[^\w-]/g, '') : '';
-    const safePic = (item.vod_pic || '').toString()
-        .replace(/^http:\/\//i, 'https://')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    const safeName = (item.vod_name || '').toString()
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    const sourceInfo = item.source_name ?
-        `<span class="bg-[#222] text-xs px-1.5 py-0.5 rounded-full">${item.source_name}</span>` : '';
-    const sourceCode = item.source_code || '';
+// ===================== 搜索结果渲染（同名聚合 + DOM 构建） =====================
+// 不再用字符串拼接 HTML：所有来自采集站的字段都通过 textContent 写入，杜绝 XSS。
 
-    const apiUrlAttr = item.api_url ?
-        `data-api-url="${item.api_url.replace(/"/g, '&quot;')}"` : '';
+let searchResultItems = [];       // 本次搜索收到的全部原始结果
+let searchGroups = new Map();     // 聚合键 -> group
+let searchBannedKeywords = null;  // 黄色内容过滤词（搜索开始时确定）
 
-    const hasCover = item.vod_pic && item.vod_pic.startsWith('http');
+function isAggregateEnabled() {
+    return localStorage.getItem('aggregateResultsEnabled') !== 'false';
+}
 
-    return `
-        <div class="card-hover bg-[#111] rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-[1.02] h-full shadow-sm hover:shadow-md"
-             onclick="showDetails('${safeId}','${safeName}','${sourceCode}')" ${apiUrlAttr}>
-            <div class="flex h-full">
-                ${hasCover ? `
-                <div class="relative flex-shrink-0 search-card-img-container">
-                    <img src="${safePic}" alt="${safeName}"
-                         class="h-full w-full object-cover transition-transform hover:scale-110"
-                         onerror="this.onerror=null; this.style.display='none'; this.parentElement.classList.add('bg-[#222]');"
-                         loading="lazy">
-                    <div class="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent"></div>
-                </div>` : ''}
+// 生成聚合键：去空白、去标点、去括号内容、去常见画质/语言后缀
+function normalizeTitleKey(name) {
+    let t = String(name || '').toLowerCase();
+    const stripped = t.replace(/[(（\[【][^)）\]】]*[)）\]】]/g, '');
+    if (stripped.trim()) t = stripped;
+    t = t
+        .replace(/[\s\u3000]+/g, '')
+        .replace(/[·\-—_:：!！?？,，。.、'"“”‘’()（）\[\]【】《》<>/\\|~～]/g, '')
+        .replace(/(国语|粤语|中字|台配|日语|英语|原声)?(hd|bd|tc|ts|4k|1080p|720p|高清|蓝光|抢先|完整|正片|修复|重制|未删减|加长)?版?$/, '');
+    return t || String(name || '').trim().toLowerCase();
+}
 
-                <div class="p-2 flex flex-col flex-grow">
-                    <div class="flex-grow">
-                        <h3 class="font-semibold mb-2 break-words line-clamp-2 ${hasCover ? '' : 'text-center'}" title="${safeName}">${safeName}</h3>
+function h(tag, className, text) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text !== undefined && text !== null) el.textContent = text;
+    return el;
+}
 
-                        <div class="flex flex-wrap ${hasCover ? '' : 'justify-center'} gap-1 mb-2">
-                            ${(item.type_name || '').toString().replace(/</g, '&lt;') ?
-                `<span class="text-xs py-0.5 px-1.5 rounded bg-opacity-20 bg-blue-500 text-blue-300">
-                                      ${(item.type_name || '').toString().replace(/</g, '&lt;')}
-                                  </span>` : ''}
-                            ${(item.vod_year || '') ?
-                `<span class="text-xs py-0.5 px-1.5 rounded bg-opacity-20 bg-purple-500 text-purple-300">
-                                      ${item.vod_year}
-                                  </span>` : ''}
-                        </div>
-                        <p class="text-gray-400 line-clamp-2 overflow-hidden ${hasCover ? '' : 'text-center'} mb-2">
-                            ${(item.vod_remarks || '暂无介绍').toString().replace(/</g, '&lt;')}
-                        </p>
-                    </div>
+function resetSearchResults() {
+    searchResultItems = [];
+    searchGroups = new Map();
+    const resultsDiv = document.getElementById('results');
+    if (resultsDiv) resultsDiv.textContent = '';
+    updateSearchResultsCount();
+}
 
-                    <div class="flex justify-between items-center mt-1 pt-1 border-t border-gray-800">
-                        ${sourceInfo ? `<div>${sourceInfo}</div>` : '<div></div>'}
-                    </div>
-                </div>
-            </div>
+function updateSearchResultsCount() {
+    const el = document.getElementById('searchResultsCount');
+    if (!el) return;
+    if (isAggregateEnabled()) {
+        el.textContent = `${searchGroups.size}`;
+        const suffix = document.getElementById('searchResultsSuffix');
+        if (suffix) suffix.textContent = searchResultItems.length > searchGroups.size ? `（来自 ${searchResultItems.length} 条源数据）` : '';
+    } else {
+        el.textContent = `${searchResultItems.length}`;
+        const suffix = document.getElementById('searchResultsSuffix');
+        if (suffix) suffix.textContent = '';
+    }
+}
+
+function pickCover(items) {
+    for (const it of items) {
+        const pic = String(it.vod_pic || '');
+        if (/^https?:\/\//i.test(pic)) return pic.replace(/^http:\/\//i, 'https://');
+    }
+    return '';
+}
+
+// 构建一张结果卡片（对应一个 group）
+function buildResultCard(group) {
+    const first = group.items[0];
+    const cover = pickCover(group.items);
+
+    const card = h('div', 'card-hover bg-[#111] rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-[1.02] h-full shadow-sm hover:shadow-md');
+    card.setAttribute('role', 'button');
+    card.tabIndex = 0;
+    const open = () => openResultGroup(group);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+
+    const row = h('div', 'flex h-full');
+    card.appendChild(row);
+
+    if (cover) {
+        const imgWrap = h('div', 'relative flex-shrink-0 search-card-img-container');
+        const img = h('img', 'h-full w-full object-cover transition-transform hover:scale-110');
+        img.src = cover;
+        img.alt = first.vod_name || '';
+        img.loading = 'lazy';
+        img.referrerPolicy = 'no-referrer';
+        img.addEventListener('error', () => {
+            img.style.display = 'none';
+            imgWrap.classList.add('bg-[#222]');
+        }, { once: true });
+        imgWrap.appendChild(img);
+        imgWrap.appendChild(h('div', 'absolute inset-0 bg-gradient-to-r from-black/30 to-transparent'));
+        row.appendChild(imgWrap);
+    }
+
+    const body = h('div', 'p-2 flex flex-col flex-grow');
+    const grow = h('div', 'flex-grow');
+    const title = h('h3', `font-semibold mb-2 break-words line-clamp-2 ${cover ? '' : 'text-center'}`, first.vod_name || '');
+    title.title = first.vod_name || '';
+    grow.appendChild(title);
+
+    const tags = h('div', `flex flex-wrap ${cover ? '' : 'justify-center'} gap-1 mb-2`);
+    group.typeEl = h('span', 'text-xs py-0.5 px-1.5 rounded bg-opacity-20 bg-blue-500 text-blue-300');
+    group.yearEl = h('span', 'text-xs py-0.5 px-1.5 rounded bg-opacity-20 bg-purple-500 text-purple-300');
+    tags.appendChild(group.typeEl);
+    tags.appendChild(group.yearEl);
+    grow.appendChild(tags);
+
+    group.remarksEl = h('p', `text-gray-400 line-clamp-2 overflow-hidden ${cover ? '' : 'text-center'} mb-2`);
+    grow.appendChild(group.remarksEl);
+    body.appendChild(grow);
+
+    const footer = h('div', 'flex justify-between items-center mt-1 pt-1 border-t border-gray-800 gap-1');
+    group.sourceWrap = h('div', 'flex flex-wrap gap-1 min-w-0');
+    group.countEl = h('span', 'text-xs text-gray-500 flex-shrink-0');
+    footer.appendChild(group.sourceWrap);
+    footer.appendChild(group.countEl);
+    body.appendChild(footer);
+    row.appendChild(body);
+
+    group.el = card;
+    refreshResultCard(group);
+    return card;
+}
+
+// 用 group 内的全部条目刷新卡片上的可变信息
+function refreshResultCard(group) {
+    const items = group.items;
+    const first = items[0];
+    const typeName = items.map(i => i.type_name).find(Boolean) || '';
+    const year = items.map(i => i.vod_year).find(Boolean) || '';
+    const remarks = items.map(i => i.vod_remarks).find(Boolean) || '暂无介绍';
+
+    group.typeEl.textContent = typeName;
+    group.typeEl.style.display = typeName ? '' : 'none';
+    group.yearEl.textContent = year;
+    group.yearEl.style.display = year ? '' : 'none';
+    group.remarksEl.textContent = remarks;
+
+    group.sourceWrap.textContent = '';
+    const names = [];
+    const seen = new Set();
+    for (const it of items) {
+        if (it.source_name && !seen.has(it.source_name)) { seen.add(it.source_name); names.push(it.source_name); }
+    }
+    const MAX_CHIPS = 3;
+    names.slice(0, MAX_CHIPS).forEach(n => {
+        group.sourceWrap.appendChild(h('span', 'bg-[#222] text-xs px-1.5 py-0.5 rounded-full truncate max-w-[7rem]', n));
+    });
+    if (names.length > MAX_CHIPS) {
+        group.sourceWrap.appendChild(h('span', 'bg-[#333] text-xs px-1.5 py-0.5 rounded-full', `+${names.length - MAX_CHIPS}`));
+    }
+    group.countEl.textContent = items.length > 1 ? `${items.length} 个源` : '';
+    void first;
+}
+
+// 点击卡片：单源直接进详情，多源弹出选择
+function openResultGroup(group) {
+    if (group.items.length === 1 || !isAggregateEnabled()) {
+        const it = group.items[0];
+        showDetails(it.vod_id, it.vod_name, it.source_code);
+        return;
+    }
+    showSourcePicker(group);
+}
+
+function showSourcePicker(group) {
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+    if (!modal || !modalTitle || !modalContent) return;
+
+    modalTitle.textContent = '';
+    modalTitle.appendChild(h('span', 'break-words', group.items[0].vod_name || ''));
+    modalTitle.appendChild(h('span', 'text-sm font-normal text-gray-400 ml-2', `选择播放源（${group.items.length}）`));
+
+    modalContent.textContent = '';
+    const tip = h('p', 'text-xs text-gray-500 mb-3', '同一部影片在多个源都有收录，请选择一个源查看剧集。绿点表示巡检可用，黄点表示海外巡检受限（国内网络可能正常）。');
+    modalContent.appendChild(tip);
+
+    const list = h('div', 'grid grid-cols-1 sm:grid-cols-2 gap-2');
+    const ordered = window.SourceHealth
+        ? [...group.items].sort((a, b) => {
+            const rank = { ok: 0, unknown: 1, api_only: 2, down: 3 };
+            return rank[SourceHealth.status(a.source_code)] - rank[SourceHealth.status(b.source_code)];
+        })
+        : group.items;
+
+    ordered.forEach(it => {
+        const btn = h('button', 'text-left p-3 bg-[#1a1a1a] hover:bg-[#252525] border border-[#333] hover:border-[#555] rounded-lg transition-colors');
+        const head = h('div', 'flex items-center justify-between gap-2');
+        const nameWrap = h('div', 'flex items-center min-w-0');
+        nameWrap.appendChild(h('span', 'font-medium truncate', it.source_name || it.source_code || '未知源'));
+        if (window.SourceHealth) nameWrap.appendChild(SourceHealth.badge(it.source_code));
+        head.appendChild(nameWrap);
+        if (it.vod_year) head.appendChild(h('span', 'text-xs text-gray-500 flex-shrink-0', it.vod_year));
+        btn.appendChild(head);
+        const meta = [it.type_name, it.vod_remarks].filter(Boolean).join(' · ');
+        if (meta) btn.appendChild(h('div', 'text-xs text-gray-400 mt-1 truncate', meta));
+        if (it.vod_name && it.vod_name !== group.items[0].vod_name) {
+            btn.appendChild(h('div', 'text-xs text-gray-500 mt-0.5 truncate', it.vod_name));
+        }
+        btn.addEventListener('click', () => showDetails(it.vod_id, it.vod_name, it.source_code));
+        list.appendChild(btn);
+    });
+    modalContent.appendChild(list);
+    modal.classList.remove('hidden');
+}
+
+// 追加一批结果（搜索过程中每页调用一次）
+function appendSearchBatch(results) {
+    let filtered = results;
+    if (searchBannedKeywords) {
+        filtered = results.filter(item => {
+            const typeName = item.type_name || '';
+            return !searchBannedKeywords.some(keyword => typeName.includes(keyword));
+        });
+    }
+    if (filtered.length === 0) return;
+
+    const resultsDiv = document.getElementById('results');
+    const aggregate = isAggregateEnabled();
+    const fragment = document.createDocumentFragment();
+    const touched = new Set();
+
+    for (const item of filtered) {
+        // 同源同 id 完全重复的条目直接丢弃
+        const dupKey = `${item.source_code}:${item.vod_id}`;
+        if (searchResultItems.some(x => `${x.source_code}:${x.vod_id}` === dupKey)) continue;
+        searchResultItems.push(item);
+
+        const key = aggregate ? normalizeTitleKey(item.vod_name) : dupKey;
+        let group = searchGroups.get(key);
+        if (!group) {
+            group = { key, items: [item] };
+            searchGroups.set(key, group);
+            fragment.appendChild(buildResultCard(group));
+        } else {
+            group.items.push(item);
+            touched.add(group);
+        }
+    }
+    if (fragment.childNodes.length) resultsDiv.appendChild(fragment);
+    touched.forEach(refreshResultCard);
+    updateSearchResultsCount();
+}
+
+// 切换聚合开关后，用已有数据重新渲染
+function rerenderSearchResults() {
+    const items = searchResultItems.slice();
+    searchResultItems = [];
+    searchGroups = new Map();
+    const resultsDiv = document.getElementById('results');
+    if (resultsDiv) resultsDiv.textContent = '';
+    if (items.length) appendSearchBatch(items);
+    updateSearchResultsCount();
+}
+
+function renderEmptySearchState() {
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = `
+        <div class="col-span-full text-center py-16">
+            <svg class="mx-auto h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-400">没有找到匹配的结果</h3>
+            <p class="mt-1 text-sm text-gray-500">请尝试其他关键词或更换数据源</p>
         </div>
     `;
 }
@@ -721,8 +982,7 @@ async function search() {
             doubanArea.classList.add('hidden');
         }
 
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = '';
+        resetSearchResults();
 
         // 更新URL和标题（只设置一次）
         try {
@@ -739,40 +999,11 @@ async function search() {
 
         // 黄色内容过滤
         const yellowFilterEnabled = localStorage.getItem('yellowFilterEnabled') === 'true';
-        const banned = yellowFilterEnabled ?
+        searchBannedKeywords = yellowFilterEnabled ?
             ['伦理片', '福利', '里番动漫', '门事件', '萝莉少女', '制服诱惑', '国产传媒', 'cosplay', '黑丝诱惑', '无码', '日本无码', '有码', '日本有码', 'SWAG', '网红主播', '色情片', '同性片', '福利视频', '福利片'] : null;
 
-        let totalResults = 0;
-        let hasAnyResults = false;
-
-        // 追加一批结果到页面
-        function appendBatch(results) {
-            let filtered = results;
-            if (banned) {
-                filtered = results.filter(item => {
-                    const typeName = item.type_name || '';
-                    return !banned.some(keyword => typeName.includes(keyword));
-                });
-            }
-            if (filtered.length === 0) return;
-
-            // 批内排序：按名称优先，名称相同时按接口源排序
-            filtered.sort((a, b) => {
-                const nameCompare = (a.vod_name || '').localeCompare(b.vod_name || '');
-                if (nameCompare !== 0) return nameCompare;
-                return (a.source_name || '').localeCompare(b.source_name || '');
-            });
-
-            const html = filtered.map(createSearchResultCard).join('');
-            resultsDiv.insertAdjacentHTML('beforeend', html);
-            totalResults += filtered.length;
-            hasAnyResults = true;
-
-            const searchResultsCount = document.getElementById('searchResultsCount');
-            if (searchResultsCount) {
-                searchResultsCount.textContent = totalResults;
-            }
-        }
+        // 健康、响应快的源排在前面，让首屏更快出现结果
+        const orderedAPIs = window.SourceHealth ? SourceHealth.sortByHealth(selectedAPIs) : selectedAPIs.slice();
 
         // 并发限制的多源搜索；每个源的每一页结果到达后立即渲染
         const MAX_CONCURRENT = (typeof AGGREGATED_SEARCH_CONFIG !== 'undefined' && AGGREGATED_SEARCH_CONFIG.sourceConcurrency) || 6;
@@ -780,14 +1011,14 @@ async function search() {
         const onBatch = (results) => {
             if (signal.aborted) return;
             if (Array.isArray(results) && results.length > 0) {
-                appendBatch(results);
+                appendSearchBatch(results);
             }
         };
 
         async function worker() {
-            while (nextIndex < selectedAPIs.length) {
+            while (nextIndex < orderedAPIs.length) {
                 if (signal.aborted) return;
-                const apiId = selectedAPIs[nextIndex++];
+                const apiId = orderedAPIs[nextIndex++];
                 try {
                     await searchByAPIAndKeyWord(apiId, query, signal, onBatch);
                 } catch (err) {
@@ -798,7 +1029,7 @@ async function search() {
             }
         }
 
-        const workerCount = Math.min(MAX_CONCURRENT, selectedAPIs.length);
+        const workerCount = Math.min(MAX_CONCURRENT, orderedAPIs.length);
         const workers = [];
         for (let i = 0; i < workerCount; i++) {
             workers.push(worker());
@@ -808,17 +1039,8 @@ async function search() {
         if (signal.aborted) return;
 
         // 全部源完成后如果没有结果，显示空状态
-        if (!hasAnyResults) {
-            resultsDiv.innerHTML = `
-                <div class="col-span-full text-center py-16">
-                    <svg class="mx-auto h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h3 class="mt-2 text-lg font-medium text-gray-400">没有找到匹配的结果</h3>
-                    <p class="mt-1 text-sm text-gray-500">请尝试其他关键词或更换数据源</p>
-                </div>
-            `;
+        if (searchResultItems.length === 0) {
+            renderEmptySearchState();
         }
     } catch (error) {
         if (!signal.aborted) {
