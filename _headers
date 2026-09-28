@@ -1,0 +1,18 @@
+# Cloudflare Pages 静态资源缓存策略
+# 第三方库很少变动：浏览器缓存 7 天
+/libs/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+# 站点自身 JS/CSS/图片：1 小时，允许后台重新验证
+/js/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+/css/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+/image/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+# HTML 始终重新验证，保证发版即生效
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+/
+  Cache-Control: public, max-age=0, must-revalidate
