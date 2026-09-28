@@ -12,11 +12,11 @@
     <link rel="manifest" href="manifest.json">
 
     <!-- 提前并行下载播放器核心库，避免等到 body 末尾才开始请求 -->
-    <link rel="preload" href="libs/hls.min.js?v=202609281731" as="script" crossorigin="anonymous">
-    <link rel="preload" href="libs/artplayer.min.js?v=202609281731" as="script" crossorigin="anonymous">
-    <link rel="stylesheet" href="css/tailwind.min.css?v=202609281731">
-    <link rel="stylesheet" href="css/styles.css?v=202609281731">
-    <link rel="stylesheet" href="css/player.css?v=202609281731">
+    <link rel="preload" href="libs/hls.min.js?v=202609281742" as="script" crossorigin="anonymous">
+    <link rel="preload" href="libs/artplayer.min.js?v=202609281742" as="script" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/tailwind.min.css?v=202609281742">
+    <link rel="stylesheet" href="css/styles.css?v=202609281742">
+    <link rel="stylesheet" href="css/player.css?v=202609281742">
     
     <meta http-equiv="Cache-Control" content="no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
@@ -201,21 +201,21 @@
     </div>
 
     <!-- 引入纯 JS sha256（HTTP 下依然可用） -->
-    <script data-cfasync="false" src="libs/sha256.min.js?v=202609281731"></script>
+    <script data-cfasync="false" src="libs/sha256.min.js?v=202609281742"></script>
     <script data-cfasync="false">
         // 保存 js-sha256 实现供配置导入/导出校验使用
         window._jsSha256 = window.sha256;
     </script>
     
-    <script data-cfasync="false" src="libs/hls.min.js?v=202609281731" crossorigin="anonymous"></script>
-    <script data-cfasync="false" src="libs/artplayer.min.js?v=202609281731" crossorigin="anonymous"></script>
+    <script data-cfasync="false" src="libs/hls.min.js?v=202609281742" crossorigin="anonymous"></script>
+    <script data-cfasync="false" src="libs/artplayer.min.js?v=202609281742" crossorigin="anonymous"></script>
 
-    <script data-cfasync="false" src="js/config.js?v=202609281731"></script>
-    <script data-cfasync="false" src="js/play-session.js?v=202609281731"></script>
-    <script data-cfasync="false" src="js/ui.js?v=202609281731"></script>
-    <script data-cfasync="false" src="js/api.js?v=202609281731"></script>
-    <script data-cfasync="false" src="js/search.js?v=202609281731"></script>
-    <script data-cfasync="false" src="js/player.js?v=202609281731"></script>
+    <script data-cfasync="false" src="js/config.js?v=202609281742"></script>
+    <script data-cfasync="false" src="js/play-session.js?v=202609281742"></script>
+    <script data-cfasync="false" src="js/ui.js?v=202609281742"></script>
+    <script data-cfasync="false" src="js/api.js?v=202609281742"></script>
+    <script data-cfasync="false" src="js/search.js?v=202609281742"></script>
+    <script data-cfasync="false" src="js/player.js?v=202609281742"></script>
 
     <script data-cfasync="false">
         // 修复 home 跳转

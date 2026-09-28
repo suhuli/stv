@@ -61,28 +61,13 @@ function initDouban() {
         const isEnabled = localStorage.getItem('doubanEnabled') === 'true';
         doubanToggle.checked = isEnabled;
         
-        // 设置开关外观
-        const toggleBg = doubanToggle.nextElementSibling;
-        const toggleDot = toggleBg.nextElementSibling;
-        if (isEnabled) {
-            toggleBg.classList.add('bg-pink-600');
-            toggleDot.classList.add('translate-x-6');
-        }
-        
+        // 开关外观由 styles.css 的通用规则（input:checked + .toggle-bg / ~ .toggle-dot）统一处理
+
         // 添加事件监听
         doubanToggle.addEventListener('change', function(e) {
             const isChecked = e.target.checked;
             localStorage.setItem('doubanEnabled', isChecked);
-            
-            // 更新开关外观
-            if (isChecked) {
-                toggleBg.classList.add('bg-pink-600');
-                toggleDot.classList.add('translate-x-6');
-            } else {
-                toggleBg.classList.remove('bg-pink-600');
-                toggleDot.classList.remove('translate-x-6');
-            }
-            
+
             // 更新显示状态
             updateDoubanVisibility();
         });
