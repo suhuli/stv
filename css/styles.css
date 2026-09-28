@@ -299,31 +299,23 @@ body {
     box-shadow: 0 0 8px rgba(0, 204, 255, 0.3);
 }
 
-#yellowFilterToggle:checked + .toggle-bg {
+/* 通用开关样式：适用于所有 input[type=checkbox] + .toggle-bg + .toggle-dot 结构 */
+input[type="checkbox"]:checked + .toggle-bg {
     background-color: var(--primary-color);
 }
 
-#yellowFilterToggle:checked ~ .toggle-dot {
+input[type="checkbox"]:checked ~ .toggle-dot {
     transform: translateX(1.5rem);
+    box-shadow: 0 2px 4px rgba(0, 204, 255, 0.3);
 }
 
-#yellowFilterToggle:focus + .toggle-bg,
-#yellowFilterToggle:hover + .toggle-bg {
+input[type="checkbox"]:focus + .toggle-bg,
+input[type="checkbox"]:hover + .toggle-bg {
     box-shadow: 0 0 0 2px rgba(0, 204, 255, 0.3);
 }
 
-/* 添加广告过滤开关的CSS */
-#adFilterToggle:checked + .toggle-bg {
-    background-color: var(--primary-color);
-}
-
-#adFilterToggle:checked ~ .toggle-dot {
-    transform: translateX(1.5rem);
-}
-
-#adFilterToggle:focus + .toggle-bg,
-#adFilterToggle:hover + .toggle-bg {
-    box-shadow: 0 0 0 2px rgba(0, 204, 255, 0.3);
+input[type="checkbox"]:disabled + .toggle-bg {
+    opacity: 0.5;
 }
 
 .toggle-dot {
@@ -333,10 +325,6 @@ body {
 
 .toggle-bg {
     transition: background-color 0.3s ease-in-out;
-}
-
-#yellowFilterToggle:checked ~ .toggle-dot {
-    box-shadow: 0 2px 4px rgba(0, 204, 255, 0.3);
 }
 
 #adFilterToggle:checked ~ .toggle-dot {
