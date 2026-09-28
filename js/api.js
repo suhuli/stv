@@ -30,9 +30,7 @@ async function handleApiRequest(url) {
             
             try {
                 // 添加鉴权参数到代理URL
-                const proxiedUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
-                    await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(apiUrl)) :
-                    PROXY_URL + encodeURIComponent(apiUrl);
+                const proxiedUrl = PROXY_URL + encodeURIComponent(apiUrl);
                     
                 const response = await fetch(proxiedUrl, {
                     headers: API_CONFIG.search.headers,
@@ -119,9 +117,7 @@ async function handleApiRequest(url) {
             
             try {
                 // 添加鉴权参数到代理URL
-                const proxiedUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
-                    await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(detailUrl)) :
-                    PROXY_URL + encodeURIComponent(detailUrl);
+                const proxiedUrl = PROXY_URL + encodeURIComponent(detailUrl);
                     
                 const response = await fetch(proxiedUrl, {
                     headers: API_CONFIG.detail.headers,
@@ -236,9 +232,7 @@ async function handleCustomApiSpecialDetail(id, customApi) {
         const timeoutId = setTimeout(() => controller.abort(), 10000);
         
         // 添加鉴权参数到代理URL
-        const proxiedUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
-            await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(detailUrl)) :
-            PROXY_URL + encodeURIComponent(detailUrl);
+        const proxiedUrl = PROXY_URL + encodeURIComponent(detailUrl);
             
         // 获取详情页HTML
         const response = await fetch(proxiedUrl, {
@@ -303,9 +297,7 @@ async function handleSpecialSourceDetail(id, sourceCode) {
         const timeoutId = setTimeout(() => controller.abort(), 10000);
         
         // 添加鉴权参数到代理URL
-        const proxiedUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
-            await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(detailUrl)) :
-            PROXY_URL + encodeURIComponent(detailUrl);
+        const proxiedUrl = PROXY_URL + encodeURIComponent(detailUrl);
             
         // 获取详情页HTML
         const response = await fetch(proxiedUrl, {
@@ -393,9 +385,7 @@ async function handleAggregatedSearch(searchQuery) {
             );
             
             // 添加鉴权参数到代理URL
-            const proxiedUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
-                await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(apiUrl)) :
-                PROXY_URL + encodeURIComponent(apiUrl);
+            const proxiedUrl = PROXY_URL + encodeURIComponent(apiUrl);
             
             const fetchPromise = fetch(proxiedUrl, {
                 headers: API_CONFIG.search.headers
@@ -507,9 +497,7 @@ async function handleMultipleCustomSearch(searchQuery, customApiUrls) {
             );
             
             // 添加鉴权参数到代理URL
-            const proxiedUrl = await window.ProxyAuth?.addAuthToProxyUrl ? 
-                await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(fullUrl)) :
-                PROXY_URL + encodeURIComponent(fullUrl);
+            const proxiedUrl = PROXY_URL + encodeURIComponent(fullUrl);
             
             const fetchPromise = fetch(proxiedUrl, {
                 headers: API_CONFIG.search.headers
@@ -597,11 +585,6 @@ async function handleMultipleCustomSearch(searchQuery, customApiUrls) {
         const requestUrl = typeof input === 'string' ? new URL(input, window.location.origin) : input.url;
         
         if (requestUrl.pathname.startsWith('/api/')) {
-            if (window.isPasswordProtected && window.isPasswordVerified) {
-                if (window.isPasswordProtected() && !window.isPasswordVerified()) {
-                    return;
-                }
-            }
             try {
                 const data = await handleApiRequest(requestUrl);
                 return new Response(data, {

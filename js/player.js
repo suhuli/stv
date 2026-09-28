@@ -99,12 +99,6 @@ document.addEventListener('DOMContentLoaded', function () {
     initializePageContent();
 });
 
-// 监听密码验证成功事件
-document.addEventListener('passwordVerified', () => {
-    document.getElementById('player-loading').style.display = 'block';
-
-    initializePageContent();
-});
 
 // 初始化页面内容
 function initializePageContent() {

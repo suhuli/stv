@@ -23,7 +23,7 @@
 
 ## 🚨 重要声明
 
-- 本项目仅供学习和个人使用，为避免版权纠纷，必须设置PASSWORD环境变量
+- 本项目仅供学习和个人使用，为避免版权纠纷，建议使用 Cloudflare Access 等方式限制访问范围
 - 请勿将部署的实例用于商业用途或公开服务
 - 如因公开分享导致的任何法律问题，用户需自行承担责任
 - 项目开发者不对用户的使用行为承担任何法律责任
@@ -43,14 +43,30 @@
 4. 使用以下设置：
    - 构建命令：留空（无需构建）
    - 输出目录：留空（默认为根目录）
-5. **⚠️ 重要：在"设置" > "环境变量"中添加 `PASSWORD` 变量（必须设置）**
-6. 点击"保存并部署"
+5. 点击"保存并部署"
+6. （可选）在"设置" > "环境变量"中配置代理缓存参数，见下文「代理配置」
 
 ## 🔧 自定义配置
 
-### 密码保护
+### 访问控制
 
-**重要提示**: 为确保安全，所有部署都必须设置 PASSWORD 环境变量，否则用户将看到设置密码的提示。
+项目本身不再内置密码功能。如需限制访问，推荐在 Cloudflare Dashboard 中为 Pages 项目启用 [Cloudflare Access](https://developers.cloudflare.com/cloudflare-one/applications/configure-apps/self-hosted-apps/)（支持邮箱一次性验证码、GitHub 登录等，免费额度足够个人使用）。
+
+### 代理配置
+
+`/proxy/*` 由 Pages Function 提供，可通过环境变量调整（均为可选）：
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `API_CACHE_TTL` | `600` | 采集站搜索/详情 JSON 的边缘缓存秒数 |
+| `MEDIA_CACHE_TTL` | `86400` | 图片等二进制资源的边缘缓存秒数 |
+| `M3U8_CACHE_TTL` | `300` | 经代理重写的 m3u8 缓存秒数 |
+| `UPSTREAM_TIMEOUT` | `10000` | 回源超时（毫秒） |
+| `MAX_RECURSION` | `5` | m3u8 主列表递归解析层数 |
+| `USER_AGENTS_JSON` | 内置 Chrome UA | JSON 字符串数组，随机选用 |
+| `DEBUG` | `false` | 输出调试日志 |
+
+缓存基于 Cloudflare Cache API，不需要绑定 KV。
 
 
 ### API兼容性
