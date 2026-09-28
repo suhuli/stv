@@ -62,7 +62,8 @@
 | `MEDIA_CACHE_TTL` | `86400` | 图片等二进制资源的边缘缓存秒数 |
 | `M3U8_CACHE_TTL` | `300` | 经代理重写的 m3u8 缓存秒数 |
 | `UPSTREAM_TIMEOUT` | `10000` | 回源超时（毫秒） |
-| `MAX_RECURSION` | `5` | m3u8 主列表递归解析层数 |
+| `M3U8_FLATTEN` | `false` | 设为 `true` 时把多码率主列表压平为最高码率（旧行为）；默认保留所有码率由播放器自适应 |
+| `MAX_RECURSION` | `5` | 压平模式下主列表递归解析层数 |
 | `USER_AGENTS_JSON` | 内置 Chrome UA | JSON 字符串数组，随机选用 |
 | `DEBUG` | `false` | 输出调试日志 |
 

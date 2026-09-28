@@ -9,7 +9,9 @@
 //   MEDIA_CACHE_TTL   图片等二进制资源的边缘缓存秒数，默认 86400
 //   M3U8_CACHE_TTL    重写后的 m3u8 缓存秒数，默认 300
 //   UPSTREAM_TIMEOUT  回源超时毫秒，默认 10000
-//   MAX_RECURSION     m3u8 主列表递归层数，默认 5
+//   MAX_RECURSION     m3u8 主列表递归层数，默认 5（仅 M3U8_FLATTEN=true 时使用）
+//   M3U8_FLATTEN      'true' 时把主列表压平为最高码率的子列表（旧行为）；默认 false，
+//                     保留所有码率让播放器自适应切换
 //   USER_AGENTS_JSON  JSON 字符串数组，随机选用 UA
 //   DEBUG             'true' 时输出调试日志
 //
@@ -133,10 +135,12 @@ export async function onRequest(context) {
     // ============ 内部函数 ============
 
     async function processM3u8(sourceUrl, content, depth, cfg, log) {
-        if (content.includes('#EXT-X-STREAM-INF') || content.includes('#EXT-X-MEDIA:')) {
-            return processMasterPlaylist(sourceUrl, content, depth, cfg, log);
-        }
-        return processMediaPlaylist(sourceUrl, content);
+        const isMaster = content.includes('#EXT-X-STREAM-INF') || content.includes('#EXT-X-MEDIA:');
+        if (!isMaster) return processMediaPlaylist(sourceUrl, content);
+        if (cfg.flatten) return processMasterPlaylist(sourceUrl, content, depth, cfg, log);
+        // 默认：保留全部码率 / 音轨 / 字幕，只把地址改写为代理地址，由播放器自适应选择
+        log(`主列表按多码率重写: ${sourceUrl}`);
+        return rewriteMasterPlaylist(sourceUrl, content);
     }
 
     async function processMasterPlaylist(sourceUrl, content, depth, cfg, log) {
@@ -219,6 +223,7 @@ function readConfig(env) {
         m3u8Ttl: int(env.M3U8_CACHE_TTL, 300),
         upstreamTimeout: int(env.UPSTREAM_TIMEOUT, 10000),
         maxRecursion: int(env.MAX_RECURSION, 5),
+        flatten: env.M3U8_FLATTEN === 'true',
         userAgents
     };
 }
@@ -361,6 +366,27 @@ function rewriteUrlToProxy(targetUrl) {
 
 function rewriteUriAttribute(line, baseUrl) {
     return line.replace(/URI="([^"]+)"/, (_, uri) => `URI="${rewriteUrlToProxy(resolveUrl(baseUrl, uri))}"`);
+}
+
+// 主列表：重写 variant 地址与各类 URI= 属性，保留结构不变
+function rewriteMasterPlaylist(sourceUrl, content) {
+    const baseUrl = getBaseUrl(sourceUrl);
+    const lines = content.split('\n');
+    const out = [];
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) {
+            if (i === lines.length - 1) out.push('');
+            continue;
+        }
+        if (line.startsWith('#')) {
+            // #EXT-X-MEDIA / #EXT-X-I-FRAME-STREAM-INF / #EXT-X-SESSION-KEY 等带 URI 的标签
+            out.push(/URI="/.test(line) ? rewriteUriAttribute(line, baseUrl) : line);
+        } else {
+            out.push(rewriteUrlToProxy(resolveUrl(baseUrl, line)));
+        }
+    }
+    return out.join('\n');
 }
 
 function processMediaPlaylist(sourceUrl, content) {

@@ -414,8 +414,9 @@ function initPlayer(videoUrl) {
         levelLoadingMaxRetry: 4,
         levelLoadingRetryDelay: 1000,
         startFragPrefetch: true,
-        startLevel: 0,
-        abrEwmaDefaultEstimate: 1000000,
+        startLevel: -1,                 // 由 hls.js 根据带宽估计自动选择起始码率
+        capLevelToPlayerSize: true,     // 不超过播放器尺寸所需的分辨率，手机不拉 4K
+        abrEwmaDefaultEstimate: 2000000,
         abrBandWidthFactor: 0.95,
         abrBandWidthUpFactor: 0.7,
         abrMaxWithRealBitrate: true,
