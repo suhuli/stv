@@ -1,4 +1,19 @@
 // UI相关函数
+
+// ---- 安全输出工具 ----
+// escapeHtml：用于插入到 HTML 文本 / 属性值中的任意数据
+// jsAttr：用于内联事件处理器（onclick="fn(${jsAttr(v)})"）中的 JS 字符串字面量
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+function jsAttr(value) {
+    return escapeHtml(JSON.stringify(value ?? ''));
+}
+window.escapeHtml = escapeHtml;
+window.jsAttr = jsAttr;
+
 function toggleSettings(e) {
     // 阻止事件冒泡，防止触发document的点击事件
     e && e.stopPropagation();
@@ -391,14 +406,8 @@ function loadViewingHistory() {
     // 渲染历史记录
     historyList.innerHTML = history.map(item => {
         // 防止XSS
-        const safeTitle = item.title
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-
-        const safeSource = item.sourceName ?
-            item.sourceName.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') :
-            '未知来源';
+        const safeTitle = escapeHtml(item.title);
+        const safeSource = item.sourceName ? escapeHtml(item.sourceName) : '未知来源';
 
         const episodeText = item.episodeIndex !== undefined ?
             `第${item.episodeIndex + 1}集` : '';
@@ -435,8 +444,8 @@ function loadViewingHistory() {
 
         // 构建历史记录项HTML，添加删除按钮，需要放在position:relative的容器中
         return `
-            <div class="history-item cursor-pointer relative group" onclick="playFromHistory('${item.url}', '${safeTitle}', ${item.episodeIndex || 0}, ${item.playbackPosition || 0})">
-                <button onclick="event.stopPropagation(); deleteHistoryItem('${safeURL}')"
+            <div class="history-item cursor-pointer relative group" onclick="playFromHistory(${jsAttr(item.url)}, ${jsAttr(item.title)}, ${Number(item.episodeIndex) || 0}, ${Number(item.playbackPosition) || 0})">
+                <button onclick="event.stopPropagation(); deleteHistoryItem(${jsAttr(safeURL)})"
                         class="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-400 hover:text-red-400 p-1 rounded-full hover:bg-gray-800 z-10"
                         title="删除记录">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -266,7 +266,7 @@ function renderCustomAPIsList() {
         const textColorClass = api.isAdult ? 'text-pink-400' : 'text-white';
         const adultTag = api.isAdult ? '<span class="text-xs text-pink-400 mr-1">(18+)</span>' : '';
         // 新增 detail 地址显示
-        const detailLine = api.detail ? `<div class="text-xs text-gray-400 truncate">detail: ${api.detail}</div>` : '';
+        const detailLine = api.detail ? `<div class="text-xs text-gray-400 truncate">detail: ${escapeHtml(api.detail)}</div>` : '';
         apiItem.innerHTML = `
             <div class="flex items-center flex-1 min-w-0">
                 <input type="checkbox" id="custom_api_${index}" 
@@ -275,9 +275,9 @@ function renderCustomAPIsList() {
                        data-custom-index="${index}">
                 <div class="flex-1 min-w-0">
                     <div class="text-xs font-medium ${textColorClass} truncate">
-                        ${adultTag}${api.name}
+                        ${adultTag}${escapeHtml(api.name)}
                     </div>
-                    <div class="text-xs text-gray-500 truncate">${api.url}</div>
+                    <div class="text-xs text-gray-500 truncate">${escapeHtml(api.url)}</div>
                     ${detailLine}
                 </div>
             </div>
@@ -1152,10 +1152,12 @@ async function showDetails(id, vod_name, sourceCode) {
 
         // 显示来源信息
         const sourceName = data.videoInfo && data.videoInfo.source_name ?
-            ` <span class="text-sm font-normal text-gray-400">(${data.videoInfo.source_name})</span>` : '';
+            ` <span class="text-sm font-normal text-gray-400">(${escapeHtml(data.videoInfo.source_name)})</span>` : '';
 
         // 不对标题进行截断处理，允许完整显示
-        modalTitle.innerHTML = `<span class="break-words">${vod_name || '未知视频'}</span>${sourceName}`;
+        modalTitle.innerHTML = `<span class="break-words">${escapeHtml(vod_name || '未知视频')}</span>${sourceName}`;
+        // 记录当前详情上下文，供剧集按钮使用（避免把数据拼进内联 JS）
+        currentDetailContext = { sourceCode, vodId: id };
         currentVideoTitle = vod_name || '未知视频';
 
         if (data.episodes && data.episodes.length > 0) {
@@ -1163,7 +1165,9 @@ async function showDetails(id, vod_name, sourceCode) {
             let detailInfoHtml = '';
             if (data.videoInfo) {
                 // Prepare description text, strip HTML and trim whitespace
-                const descriptionText = data.videoInfo.desc ? data.videoInfo.desc.replace(/<[^>]+>/g, '').trim() : '';
+                const descriptionText = data.videoInfo.desc ? escapeHtml(data.videoInfo.desc.replace(/<[^>]+>/g, '').trim()) : '';
+                const info = {};
+                ['type', 'year', 'area', 'director', 'actor', 'remarks'].forEach(k => { info[k] = escapeHtml(data.videoInfo[k] || ''); });
 
                 // Check if there's any actual grid content
                 const hasGridContent = data.videoInfo.type || data.videoInfo.year || data.videoInfo.area || data.videoInfo.director || data.videoInfo.actor || data.videoInfo.remarks;
@@ -1173,12 +1177,12 @@ async function showDetails(id, vod_name, sourceCode) {
                 <div class="modal-detail-info">
                     ${hasGridContent ? `
                     <div class="detail-grid">
-                        ${data.videoInfo.type ? `<div class="detail-item"><span class="detail-label">类型:</span> <span class="detail-value">${data.videoInfo.type}</span></div>` : ''}
-                        ${data.videoInfo.year ? `<div class="detail-item"><span class="detail-label">年份:</span> <span class="detail-value">${data.videoInfo.year}</span></div>` : ''}
-                        ${data.videoInfo.area ? `<div class="detail-item"><span class="detail-label">地区:</span> <span class="detail-value">${data.videoInfo.area}</span></div>` : ''}
-                        ${data.videoInfo.director ? `<div class="detail-item"><span class="detail-label">导演:</span> <span class="detail-value">${data.videoInfo.director}</span></div>` : ''}
-                        ${data.videoInfo.actor ? `<div class="detail-item"><span class="detail-label">主演:</span> <span class="detail-value">${data.videoInfo.actor}</span></div>` : ''}
-                        ${data.videoInfo.remarks ? `<div class="detail-item"><span class="detail-label">备注:</span> <span class="detail-value">${data.videoInfo.remarks}</span></div>` : ''}
+                        ${info.type ? `<div class="detail-item"><span class="detail-label">类型:</span> <span class="detail-value">${info.type}</span></div>` : ''}
+                        ${info.year ? `<div class="detail-item"><span class="detail-label">年份:</span> <span class="detail-value">${info.year}</span></div>` : ''}
+                        ${info.area ? `<div class="detail-item"><span class="detail-label">地区:</span> <span class="detail-value">${info.area}</span></div>` : ''}
+                        ${info.director ? `<div class="detail-item"><span class="detail-label">导演:</span> <span class="detail-value">${info.director}</span></div>` : ''}
+                        ${info.actor ? `<div class="detail-item"><span class="detail-label">主演:</span> <span class="detail-value">${info.actor}</span></div>` : ''}
+                        ${info.remarks ? `<div class="detail-item"><span class="detail-label">备注:</span> <span class="detail-value">${info.remarks}</span></div>` : ''}
                     </div>` : ''}
                     ${descriptionText ? `
                     <div class="detail-desc">
@@ -1197,7 +1201,7 @@ async function showDetails(id, vod_name, sourceCode) {
                 ${detailInfoHtml}
                 <div class="flex flex-wrap items-center justify-between mb-4 gap-2">
                     <div class="flex items-center gap-2">
-                        <button onclick="toggleEpisodeOrder('${sourceCode}', '${id}')" 
+                        <button onclick="toggleEpisodeOrder(${jsAttr(sourceCode)}, ${jsAttr(id)})" 
                                 class="px-3 py-1.5 bg-[#333] hover:bg-[#444] border border-[#444] rounded text-sm transition-colors flex items-center gap-1">
                             <svg class="w-4 h-4 transform ${episodesReversed ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
@@ -1331,13 +1335,23 @@ function handlePlayerError() {
 }
 
 // 辅助函数用于渲染剧集按钮（使用当前的排序状态）
+// 当前详情弹窗的上下文（源、影片 id），由 showDetails 设置
+let currentDetailContext = { sourceCode: '', vodId: '' };
+
+// 剧集按钮点击入口：只传索引，数据从内存状态取，避免把 URL/片名拼进内联 JS
+function playEpisodeFromDetail(realIndex) {
+    const url = currentEpisodes[realIndex];
+    if (!url) return;
+    playVideo(url, currentVideoTitle, currentDetailContext.sourceCode, realIndex, currentDetailContext.vodId);
+}
+
 function renderEpisodes(vodName, sourceCode, vodId) {
     const episodes = episodesReversed ? [...currentEpisodes].reverse() : currentEpisodes;
     return episodes.map((episode, index) => {
         // 根据倒序状态计算真实的剧集索引
         const realIndex = episodesReversed ? currentEpisodes.length - 1 - index : index;
         return `
-            <button id="episode-${realIndex}" onclick="playVideo('${episode}','${vodName.replace(/"/g, '&quot;')}', '${sourceCode}', ${realIndex}, '${vodId}')" 
+            <button id="episode-${realIndex}" onclick="playEpisodeFromDetail(${realIndex})" 
                     class="px-4 py-2 bg-[#222] hover:bg-[#333] border border-[#333] rounded-lg transition-colors text-center episode-btn">
                 ${realIndex + 1}
             </button>
