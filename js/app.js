@@ -677,6 +677,30 @@ let lastSearchTriggeredAt = 0;
 let searchResultItems = [];       // 本次搜索收到的全部原始结果
 let searchGroups = new Map();     // 聚合键 -> group
 let searchBannedKeywords = null;  // 黄色内容过滤词（搜索开始时确定）
+let searchQueryKey = '';          // 当前搜索词的归一化形式，用于相关度排序
+
+// 相关度：0 完全匹配，1 以搜索词开头，2 包含搜索词，3 其他
+function relevanceRank(name) {
+    if (!searchQueryKey) return 3;
+    const key = normalizeTitleKey(name);
+    if (key === searchQueryKey) return 0;
+    if (key.startsWith(searchQueryKey)) return 1;
+    if (key.includes(searchQueryKey)) return 2;
+    return 3;
+}
+
+// 按相关度把卡片插到正确位置（同相关度按到达顺序）
+function insertCardByRank(resultsDiv, card, rank) {
+    card.dataset.rank = String(rank);
+    const children = resultsDiv.children;
+    for (let i = 0; i < children.length; i++) {
+        if (Number(children[i].dataset.rank || 3) > rank) {
+            resultsDiv.insertBefore(card, children[i]);
+            return;
+        }
+    }
+    resultsDiv.appendChild(card);
+}
 
 function isAggregateEnabled() {
     return localStorage.getItem('aggregateResultsEnabled') !== 'false';
@@ -889,7 +913,6 @@ function appendSearchBatch(results) {
 
     const resultsDiv = document.getElementById('results');
     const aggregate = isAggregateEnabled();
-    const fragment = document.createDocumentFragment();
     const touched = new Set();
 
     for (const item of filtered) {
@@ -903,13 +926,12 @@ function appendSearchBatch(results) {
         if (!group) {
             group = { key, items: [item] };
             searchGroups.set(key, group);
-            fragment.appendChild(buildResultCard(group));
+            insertCardByRank(resultsDiv, buildResultCard(group), relevanceRank(item.vod_name));
         } else {
             group.items.push(item);
             touched.add(group);
         }
     }
-    if (fragment.childNodes.length) resultsDiv.appendChild(fragment);
     touched.forEach(refreshResultCard);
     updateSearchResultsCount();
 }
@@ -983,6 +1005,7 @@ async function search() {
         }
 
         resetSearchResults();
+        searchQueryKey = normalizeTitleKey(query);
 
         // 更新URL和标题（只设置一次）
         try {
