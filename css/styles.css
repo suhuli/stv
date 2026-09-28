@@ -66,9 +66,38 @@
     background-size: cover, 100px 100px, 50px 50px, 75px 75px;
 }
 
-button, .card-hover {
+button {
     transition: all 0.3s ease;
 }
+.card-hover {
+    /* 只过渡视觉属性，位置变化（流式插入/重排）不做动画，避免抖动 */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.search-card {
+    animation: cardIn 0.25s ease both;
+}
+@keyframes cardIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.episode-btn-loading {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+    color: transparent !important;
+}
+.episode-btn-loading::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 14px; height: 14px;
+    margin: -7px 0 0 -7px;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* 改进卡片适应不同内容长度 */
 .card-hover {

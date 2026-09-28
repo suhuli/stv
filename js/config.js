@@ -156,7 +156,7 @@ const API_CONFIG = {
 const M3U8_PATTERN = /\$https?:\/\/[^"'\s]+?\.m3u8/g;
 
 // 添加自定义播放器URL
-const CUSTOM_PLAYER_URL = 'player.html'; // 使用相对路径引用本地player.html
+const CUSTOM_PLAYER_URL = 'player'; // 本地播放页（不带 .html，避免 Cloudflare Pages 的 308 重定向）
 
 // 增加视频播放相关配置
 const PLAYER_CONFIG = {

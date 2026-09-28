@@ -95,7 +95,7 @@
         if (session.vodId) params.set('id', session.vodId);
         if (options.position > 0) params.set('position', String(Math.floor(options.position)));
         if (options.returnUrl) params.set('returnUrl', options.returnUrl);
-        return 'player.html?' + params.toString();
+        return 'player?' + params.toString();
     }
 
     // 返回地址按标签页保存（不再用 localStorage，避免多标签互相干扰）

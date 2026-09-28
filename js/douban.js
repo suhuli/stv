@@ -56,28 +56,8 @@ const doubanPageSize = 16; // 一次显示的项目数量
 // 初始化豆瓣功能
 function initDouban() {
     // 设置豆瓣开关的初始状态
-    const doubanToggle = document.getElementById('doubanToggle');
-    if (doubanToggle) {
-        const isEnabled = localStorage.getItem('doubanEnabled') === 'true';
-        doubanToggle.checked = isEnabled;
-        
-        // 开关外观由 styles.css 的通用规则（input:checked + .toggle-bg / ~ .toggle-dot）统一处理
-
-        // 添加事件监听
-        doubanToggle.addEventListener('change', function(e) {
-            const isChecked = e.target.checked;
-            localStorage.setItem('doubanEnabled', isChecked);
-
-            // 更新显示状态
-            updateDoubanVisibility();
-        });
-        
-        // 初始更新显示状态
-        updateDoubanVisibility();
-
-        // 滚动到页面顶部
-        window.scrollTo(0, 0);
-    }
+    // 开关的状态同步与 change 监听由 js/douban-loader.js 负责（本文件按需加载）
+    updateDoubanVisibility();
 
     // 加载用户标签
     loadUserTags();
@@ -532,8 +512,7 @@ function resetToHome() {
     updateDoubanVisibility();
 }
 
-// 加载豆瓣首页内容
-document.addEventListener('DOMContentLoaded', initDouban);
+// 本文件由 douban-loader.js 按需注入，加载完成后由其调用 initDouban()
 
 // 显示标签管理模态框
 function showTagManageModal() {

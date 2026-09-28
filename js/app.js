@@ -760,7 +760,7 @@ function buildResultCard(group) {
     const first = group.items[0];
     const cover = pickCover(group.items);
 
-    const card = h('div', 'card-hover bg-[#111] rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-[1.02] h-full shadow-sm hover:shadow-md');
+    const card = h('div', 'card-hover search-card bg-[#111] rounded-lg overflow-hidden cursor-pointer h-full shadow-sm');
     card.setAttribute('role', 'button');
     card.tabIndex = 0;
     const open = () => openResultGroup(group);
@@ -1360,6 +1360,13 @@ let currentDetailContext = { sourceCode: '', vodId: '' };
 function playEpisodeFromDetail(realIndex) {
     const url = currentEpisodes[realIndex];
     if (!url) return;
+    // 即时反馈：按钮进入 loading 态，并防止重复点击
+    const btn = document.getElementById(`episode-${realIndex}`);
+    if (btn) {
+        if (btn.dataset.loading) return;
+        btn.dataset.loading = '1';
+        btn.classList.add('episode-btn-loading');
+    }
     playVideo(url, currentVideoTitle, currentDetailContext.sourceCode, realIndex, currentDetailContext.vodId);
 }
 

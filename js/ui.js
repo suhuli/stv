@@ -618,7 +618,7 @@ async function playFromHistory(url, title, episodeIndex, playbackPosition = 0) {
 
         // 保存当前页面URL作为返回地址（按标签页）
         let currentPath;
-        if (window.location.pathname.startsWith('/player.html') || window.location.pathname.startsWith('/watch.html')) {
+        if (/^\/(player|watch)(\.html)?$/.test(window.location.pathname)) {
             currentPath = (window.PlaySession && PlaySession.getReturnUrl()) || '/';
         } else {
             currentPath = window.location.origin + window.location.pathname + window.location.search;
@@ -632,14 +632,14 @@ async function playFromHistory(url, title, episodeIndex, playbackPosition = 0) {
         const idForUrl = historyItem ? historyItem.vod_id : '';
 
 
-        if (url.includes('player.html') || url.includes('watch.html')) {
+        if (/(?:^|\/)(?:player|watch)(?:\.html)?\?/.test(url)) {
             // console.log('检测到嵌套播放链接，解析真实URL');
             try {
                 const nestedUrl = new URL(url, window.location.origin);
                 const nestedParams = nestedUrl.searchParams;
                 const realVideoUrl = nestedParams.get('url') || url;
 
-                playerUrl = `player.html?url=${encodeURIComponent(realVideoUrl)}&title=${encodeURIComponent(title)}&index=${episodeIndex}&position=${Math.floor(playbackPosition || 0)}&returnUrl=${encodeURIComponent(currentPath)}`;
+                playerUrl = `player?url=${encodeURIComponent(realVideoUrl)}&title=${encodeURIComponent(title)}&index=${episodeIndex}&position=${Math.floor(playbackPosition || 0)}&returnUrl=${encodeURIComponent(currentPath)}`;
                 if (sourceNameForUrl) playerUrl += `&source=${encodeURIComponent(sourceNameForUrl)}`;
                 if (sourceCodeForUrl) playerUrl += `&source_code=${encodeURIComponent(sourceCodeForUrl)}`;
                 if (idForUrl) playerUrl += `&id=${encodeURIComponent(idForUrl)}`;
@@ -647,7 +647,7 @@ async function playFromHistory(url, title, episodeIndex, playbackPosition = 0) {
 
             } catch (e) {
                 // console.error('解析嵌套URL出错:', e);
-                playerUrl = `player.html?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}&index=${episodeIndex}&position=${Math.floor(playbackPosition || 0)}&returnUrl=${encodeURIComponent(currentPath)}`;
+                playerUrl = `player?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}&index=${episodeIndex}&position=${Math.floor(playbackPosition || 0)}&returnUrl=${encodeURIComponent(currentPath)}`;
                 if (sourceNameForUrl) playerUrl += `&source=${encodeURIComponent(sourceNameForUrl)}`;
                 if (sourceCodeForUrl) playerUrl += `&source_code=${encodeURIComponent(sourceCodeForUrl)}`;
                 if (idForUrl) playerUrl += `&id=${encodeURIComponent(idForUrl)}`;
@@ -682,7 +682,7 @@ async function playFromHistory(url, title, episodeIndex, playbackPosition = 0) {
         showVideoPlayer(playerUrl);
     } catch (e) {
         // console.error('从历史记录播放失败:', e);
-        const simpleUrl = `player.html?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}&index=${episodeIndex}`;
+        const simpleUrl = `player?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}&index=${episodeIndex}`;
         showVideoPlayer(simpleUrl);
     }
 }

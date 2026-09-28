@@ -107,7 +107,7 @@ function initializePageContent() {
     const savedPosition = parseInt(urlParams.get('position') || '0'); // 获取保存的播放位置
     // 解决历史记录问题：检查URL是否是player.html开头的链接
     // 如果是，说明这是历史记录重定向，需要解析真实的视频URL
-    if (videoUrl && videoUrl.includes('player.html')) {
+    if (videoUrl && /(?:^|\/)player(?:\.html)?\?/.test(videoUrl)) {
         try {
             // 尝试从嵌套URL中提取真实的视频链接
             const nestedUrlParams = new URLSearchParams(videoUrl.split('?')[1]);
@@ -217,27 +217,19 @@ function initializePageContent() {
     document.title = currentVideoTitle + ' - 私人TV播放器';
     document.getElementById('videoTitle').textContent = currentVideoTitle;
 
+    // 先把源信息、集数列表等静态内容渲染出来，再初始化播放器（视频加载慢时用户先看到完整页面）
+    renderResourceInfoBar();
+    updateEpisodeInfo();
+    renderEpisodes();
+    updateButtonStates();
+    updateOrderButton();
+
     // 初始化播放器
     if (videoUrl) {
         initPlayer(videoUrl);
     } else {
         showError('无效的视频链接');
     }
-
-    // 渲染源信息
-    renderResourceInfoBar();
-
-    // 更新集数信息
-    updateEpisodeInfo();
-
-    // 渲染集数列表
-    renderEpisodes();
-
-    // 更新按钮状态
-    updateButtonStates();
-
-    // 更新排序按钮状态
-    updateOrderButton();
 
     // 添加对进度条的监听，确保点击准确跳转
     setTimeout(() => {
@@ -1149,7 +1141,7 @@ function saveToHistory() {
     const videoInfo = {
         title: currentVideoTitle,
         directVideoUrl: currentVideoUrl, // Current episode's direct URL
-        url: `player.html?url=${encodeURIComponent(currentVideoUrl)}&title=${encodeURIComponent(currentVideoTitle)}&source=${encodeURIComponent(sourceName)}&source_code=${encodeURIComponent(sourceCode)}&id=${encodeURIComponent(id_from_params || '')}&index=${currentEpisodeIndex}&position=${Math.floor(currentPosition || 0)}`,
+        url: `player?url=${encodeURIComponent(currentVideoUrl)}&title=${encodeURIComponent(currentVideoTitle)}&source=${encodeURIComponent(sourceName)}&source_code=${encodeURIComponent(sourceCode)}&id=${encodeURIComponent(id_from_params || '')}&index=${currentEpisodeIndex}&position=${Math.floor(currentPosition || 0)}`,
         sid: currentSessionId || '',
         episodeIndex: currentEpisodeIndex,
         sourceName: sourceName,
