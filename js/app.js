@@ -1191,7 +1191,7 @@ async function showDetails(id, vod_name, sourceCode) {
             let detailInfoHtml = '';
             if (data.videoInfo) {
                 // Prepare description text, strip HTML and trim whitespace
-                const descriptionText = data.videoInfo.desc ? escapeHtml(data.videoInfo.desc.replace(/<[^>]+>/g, '').trim()) : '';
+                const descriptionText = data.videoInfo.desc ? escapeHtml(decodeHtmlEntities(data.videoInfo.desc.replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim()) : '';
                 const info = {};
                 ['type', 'year', 'area', 'director', 'actor', 'remarks'].forEach(k => { info[k] = escapeHtml(data.videoInfo[k] || ''); });
 

@@ -3,6 +3,14 @@
 // ---- 安全输出工具 ----
 // escapeHtml：用于插入到 HTML 文本 / 属性值中的任意数据
 // jsAttr：用于内联事件处理器（onclick="fn(${jsAttr(v)})"）中的 JS 字符串字面量
+// 把采集站文本里的 HTML 实体（&nbsp; &amp; &#39; …）还原为普通字符；只返回纯文本，不解析标签
+function decodeHtmlEntities(value) {
+    if (value == null) return '';
+    const ta = document.createElement('textarea');
+    ta.innerHTML = String(value);
+    return ta.value;
+}
+
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, c => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
