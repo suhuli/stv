@@ -1,212 +1,212 @@
 {
-  "generated_at": "2026-09-28T23:36:38.821Z",
+  "generated_at": "2026-09-29T22:47:00.666Z",
   "keywords": [
     "爱情",
     "三体",
     "狂飙"
   ],
   "total": 22,
-  "healthy": 13,
-  "api_only": 9,
+  "healthy": 15,
+  "api_only": 7,
   "down": 0,
   "sources": {
     "bfzy": {
       "name": "暴风资源",
       "api_ok": true,
-      "play_ok": false,
-      "latency": 569,
+      "play_ok": true,
+      "latency": 498,
       "results": 20,
-      "error": "m3u8 HTTP 404",
-      "checked_at": "2026-09-28T23:36:29.746Z"
+      "error": null,
+      "checked_at": "2026-09-29T22:46:44.164Z"
     },
     "dyttzy": {
       "name": "电影天堂资源",
       "api_ok": true,
       "play_ok": false,
-      "latency": 605,
+      "latency": 496,
       "results": 20,
       "error": "m3u8 HTTP 403",
-      "checked_at": "2026-09-28T23:36:29.683Z"
+      "checked_at": "2026-09-29T22:46:44.101Z"
     },
     "ffzy": {
       "name": "非凡影视",
       "api_ok": true,
       "play_ok": false,
-      "latency": 637,
+      "latency": 571,
       "results": 20,
       "error": "m3u8 HTTP 403",
-      "checked_at": "2026-09-28T23:36:29.748Z"
+      "checked_at": "2026-09-29T22:46:44.165Z"
     },
     "gszy": {
       "name": "光速资源",
       "api_ok": true,
       "play_ok": true,
-      "latency": 564,
+      "latency": 616,
       "results": 20,
       "error": null,
-      "checked_at": "2026-09-28T23:36:34.908Z"
+      "checked_at": "2026-09-29T22:46:49.200Z"
     },
     "haohua": {
       "name": "豪华资源",
       "api_ok": true,
       "play_ok": true,
-      "latency": 405,
+      "latency": 411,
       "results": 20,
       "error": null,
-      "checked_at": "2026-09-28T23:36:35.679Z"
+      "checked_at": "2026-09-29T22:46:50.205Z"
     },
     "hong": {
       "name": "红牛资源",
       "api_ok": true,
       "play_ok": true,
-      "latency": 1064,
+      "latency": 877,
       "results": 20,
       "error": null,
-      "checked_at": "2026-09-28T23:36:29.749Z"
+      "checked_at": "2026-09-29T22:46:44.166Z"
     },
     "huya": {
       "name": "虎牙资源",
       "api_ok": true,
       "play_ok": true,
-      "latency": 542,
+      "latency": 847,
       "results": 20,
       "error": null,
-      "checked_at": "2026-09-28T23:36:33.666Z"
+      "checked_at": "2026-09-29T22:46:48.267Z"
     },
     "ikun": {
       "name": "iKun资源",
       "api_ok": true,
       "play_ok": true,
-      "latency": 550,
+      "latency": 680,
       "results": 20,
       "error": null,
-      "checked_at": "2026-09-28T23:36:33.084Z"
+      "checked_at": "2026-09-29T22:46:47.519Z"
     },
     "iqiyi": {
       "name": "iqiyi资源",
       "api_ok": true,
       "play_ok": true,
-      "latency": 1531,
+      "latency": 2430,
       "results": 20,
       "error": null,
-      "checked_at": "2026-09-28T23:36:32.217Z"
+      "checked_at": "2026-09-29T22:46:46.235Z"
     },
     "jisu": {
       "name": "极速资源",
       "api_ok": true,
       "play_ok": false,
-      "latency": 684,
+      "latency": 411,
       "results": 20,
       "error": "fetch failed",
-      "checked_at": "2026-09-28T23:36:32.290Z"
+      "checked_at": "2026-09-29T22:46:47.009Z"
     },
     "jyzy": {
       "name": "金鹰资源",
       "api_ok": true,
       "play_ok": true,
-      "latency": 645,
+      "latency": 498,
       "results": 20,
       "error": null,
-      "checked_at": "2026-09-28T23:36:34.283Z"
+      "checked_at": "2026-09-29T22:46:48.870Z"
     },
     "lzi": {
       "name": "量子资源站",
       "api_ok": true,
-      "play_ok": false,
-      "latency": 334,
+      "play_ok": true,
+      "latency": 254,
       "results": 20,
-      "error": "m3u8 HTTP 404",
-      "checked_at": "2026-09-28T23:36:33.206Z"
+      "error": null,
+      "checked_at": "2026-09-29T22:46:47.887Z"
     },
     "maoyan": {
       "name": "猫眼资源",
       "api_ok": true,
       "play_ok": true,
-      "latency": 1131,
+      "latency": 871,
       "results": 30,
       "error": null,
-      "checked_at": "2026-09-28T23:36:36.121Z"
+      "checked_at": "2026-09-29T22:46:50.687Z"
     },
     "mdzy": {
       "name": "魔都资源",
       "api_ok": true,
       "play_ok": true,
-      "latency": 295,
+      "latency": 551,
       "results": 20,
       "error": null,
-      "checked_at": "2026-09-28T23:36:32.776Z"
+      "checked_at": "2026-09-29T22:46:47.044Z"
     },
     "ruyi": {
       "name": "如意资源",
       "api_ok": true,
-      "play_ok": false,
-      "latency": 1770,
+      "play_ok": true,
+      "latency": 2647,
       "results": 20,
-      "error": "m3u8 HTTP 404",
-      "checked_at": "2026-09-28T23:36:29.744Z"
+      "error": null,
+      "checked_at": "2026-09-29T22:46:44.162Z"
     },
     "subo": {
       "name": "速播资源",
       "api_ok": true,
       "play_ok": true,
-      "latency": 1267,
+      "latency": 1182,
       "results": 20,
       "error": null,
-      "checked_at": "2026-09-28T23:36:33.910Z"
+      "checked_at": "2026-09-29T22:46:48.282Z"
     },
     "ukzy": {
       "name": "U酷资源",
       "api_ok": true,
       "play_ok": false,
-      "latency": 870,
+      "latency": 965,
       "results": 20,
       "error": "m3u8 HTTP 403",
-      "checked_at": "2026-09-28T23:36:33.919Z"
+      "checked_at": "2026-09-29T22:46:48.526Z"
     },
     "wujin": {
       "name": "无尽资源",
       "api_ok": true,
       "play_ok": false,
-      "latency": 397,
+      "latency": 658,
       "results": 20,
       "error": "m3u8 HTTP 403",
-      "checked_at": "2026-09-28T23:36:32.872Z"
+      "checked_at": "2026-09-29T22:46:47.497Z"
     },
     "xigua": {
       "name": "西瓜资源",
       "api_ok": true,
-      "play_ok": true,
-      "latency": 556,
+      "play_ok": false,
+      "latency": 369,
       "results": 20,
-      "error": null,
-      "checked_at": "2026-09-28T23:36:35.884Z"
+      "error": "超时",
+      "checked_at": "2026-09-29T22:46:50.237Z"
     },
     "xinlang": {
       "name": "新浪资源",
       "api_ok": true,
       "play_ok": true,
-      "latency": 636,
+      "latency": 853,
       "results": 20,
       "error": null,
-      "checked_at": "2026-09-28T23:36:35.431Z"
+      "checked_at": "2026-09-29T22:46:49.865Z"
     },
     "zuid": {
       "name": "最大资源",
       "api_ok": true,
       "play_ok": false,
-      "latency": 473,
+      "latency": 450,
       "results": 20,
       "error": "m3u8 HTTP 403",
-      "checked_at": "2026-09-28T23:36:32.864Z"
+      "checked_at": "2026-09-29T22:46:47.440Z"
     },
     "zy360": {
       "name": "360资源",
       "api_ok": true,
       "play_ok": true,
-      "latency": 1567,
+      "latency": 1577,
       "results": 20,
       "error": null,
-      "checked_at": "2026-09-28T23:36:29.750Z"
+      "checked_at": "2026-09-29T22:46:44.167Z"
     }
   }
 }
