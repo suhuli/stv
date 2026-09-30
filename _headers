@@ -26,10 +26,8 @@
 /
   Cache-Control: public, max-age=0, must-revalidate
 
-# Early Hints（需在 Cloudflare 面板 Speed → Optimization → Protocol 开启）
-# Cloudflare 会把这些 Link 头以 103 提前发给浏览器，让 CSS / 播放器库在 HTML 生成期间就开始下载。
-# 注意：?v= 版本号由 scripts/bump-assets.mjs 自动同步。
-/
-  Link: </css/tailwind.min.css?v=202609301109>; rel=preload; as=style, </css/styles.css?v=202609301109>; rel=preload; as=style, </css/index.css?v=202609301109>; rel=preload; as=style, </js/app.js?v=202609301109>; rel=preload; as=script
+# Early Hints（Cloudflare 面板 Speed → Protocol 开启）
+# Cloudflare 会缓存 103 提示，因此这里只放不带版本号、长期不变的第三方库；
+# 带 ?v= 的站内 css/js 不放，否则发版后一段时间内会预加载到旧版本文件。
 /player
-  Link: </css/tailwind.min.css?v=202609301109>; rel=preload; as=style, </css/styles.css?v=202609301109>; rel=preload; as=style, </css/player.css?v=202609301109>; rel=preload; as=style, </libs/hls.min.js?v=202609301109>; rel=preload; as=script; crossorigin, </libs/artplayer.min.js?v=202609301109>; rel=preload; as=script; crossorigin
+  Link: </libs/hls.min.js>; rel=preload; as=script; crossorigin, </libs/artplayer.min.js>; rel=preload; as=script; crossorigin

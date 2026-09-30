@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const version = process.argv[2] || new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
 const files = fs.readdirSync(ROOT).filter(f => f.endsWith('.html'));
-const re = /((?:src|href)=")((?:js|css|libs)\/[^"?]+)(\?v=[^"]*)?(")/g;
+const re = /((?:src|href)=")((?:js|css)\/[^"?]+)(\?v=[^"]*)?(")/g;
+// libs/ 下的第三方库不加版本号：Cloudflare 会缓存 Early Hints，带版本号会在发版后一段时间内预加载到旧文件
 for (const f of files) {
     const p = path.join(ROOT, f);
     const before = fs.readFileSync(p, 'utf8');
@@ -20,7 +21,7 @@ for (const f of files) {
     const hp = path.join(ROOT, '_headers');
     if (fs.existsSync(hp)) {
         const before = fs.readFileSync(hp, 'utf8');
-        const after = before.replace(/(<\/(?:js|css|libs)\/[^>?]+)\?v=[^>]*>/g, `$1?v=${version}>`);
+        const after = before.replace(/(<\/(?:js|css)\/[^>?]+)\?v=[^>]*>/g, `$1?v=${version}>`);
         if (after !== before) { fs.writeFileSync(hp, after); console.log('updated _headers'); }
     }
 }
