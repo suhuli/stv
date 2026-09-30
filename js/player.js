@@ -1812,8 +1812,17 @@ async function switchToResource(sourceKey, vodId) {
             index: targetIndex
         });
         void targetUrl;
+        // 同一集换源：把当前播放进度带过去，新源从原位置继续（不同源的同一集时长基本一致）
+        let position = 0;
+        try {
+            if (targetIndex === currentIndex && art && art.duration > 0 &&
+                art.currentTime > 10 && art.currentTime < art.duration - 5) {
+                position = art.currentTime;
+            }
+        } catch (_) { /* 播放器未就绪时忽略 */ }
         window.location.href = PlaySession.buildPlayerUrl(session, {
             index: targetIndex,
+            position,
             returnUrl: PlaySession.getReturnUrl() || undefined
         });
         
