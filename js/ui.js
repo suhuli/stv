@@ -507,7 +507,6 @@ function formatPlaybackTime(seconds) {
 
 // 删除单个历史记录项
 function deleteHistoryItem(encodedUrl) {
-    setTimeout(() => { if (typeof renderContinueWatching === 'function') renderContinueWatching(); }, 0);
     try {
         // 解码URL
         const url = decodeURIComponent(encodedUrl);
@@ -791,7 +790,6 @@ function addToViewingHistory(videoInfo) {
 
 // 清空观看历史
 function clearViewingHistory() {
-    setTimeout(() => { if (typeof renderContinueWatching === 'function') renderContinueWatching(); }, 0);
     try {
         localStorage.removeItem('viewingHistory');
         loadViewingHistory(); // 重新加载空的历史记录

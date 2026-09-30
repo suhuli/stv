@@ -13,11 +13,6 @@ let episodesReversed = false;
 
 // 页面初始化
 document.addEventListener('DOMContentLoaded', async function () {
-    // 首页「继续观看」（不依赖网络，最先渲染）
-    renderContinueWatching();
-    // 从播放页返回（含 bfcache 恢复）时刷新进度
-    window.addEventListener('pageshow', () => renderContinueWatching());
-
     // 先尝试加载采集源健康数据（最多等 2.5 秒，失败不影响后续流程）
     if (window.SourceHealth) {
         try { await SourceHealth.load(2500); } catch (_) { /* 忽略 */ }
@@ -643,8 +638,6 @@ function resetSearchArea() {
         footer.style.position = '';
     }
 
-    renderContinueWatching();
-
     // 如果有豆瓣功能，检查是否需要显示豆瓣推荐区域
     if (typeof updateDoubanVisibility === 'function') {
         updateDoubanVisibility();
@@ -1007,7 +1000,6 @@ async function search() {
         document.getElementById('searchArea').classList.remove('flex-1');
         document.getElementById('searchArea').classList.add('mb-8');
         document.getElementById('resultsArea').classList.remove('hidden');
-        hideContinueWatching();
 
         // 隐藏豆瓣推荐区域（如果存在）
         const doubanArea = document.getElementById('doubanArea');
@@ -1271,67 +1263,6 @@ async function showDetails(id, vod_name, sourceCode) {
 }
 
 // 更新播放视频函数，修改为使用/watch路径而不是直接打开player.html
-// ================= 首页「继续观看」 =================
-const CONTINUE_WATCHING_MAX = 8;
-
-function hideContinueWatching() {
-    const wrap = document.getElementById('continueWatching');
-    if (wrap) wrap.classList.add('hidden');
-}
-
-function renderContinueWatching() {
-    const wrap = document.getElementById('continueWatching');
-    const list = document.getElementById('continueWatchingList');
-    if (!wrap || !list) return;
-
-    // 搜索结果展示中不显示
-    const resultsArea = document.getElementById('resultsArea');
-    if (resultsArea && !resultsArea.classList.contains('hidden')) {
-        wrap.classList.add('hidden');
-        return;
-    }
-
-    const history = (typeof getViewingHistory === 'function' ? getViewingHistory() : [])
-        .filter(it => it && it.title && it.url)
-        .slice(0, CONTINUE_WATCHING_MAX);
-    if (history.length === 0) {
-        wrap.classList.add('hidden');
-        return;
-    }
-
-    list.textContent = '';
-    history.forEach(item => {
-        const card = h('button', 'cw-card');
-        card.type = 'button';
-        card.appendChild(h('div', 'cw-title', item.title));
-
-        const total = Array.isArray(item.episodes) ? item.episodes.length : 0;
-        const epText = Number.isInteger(item.episodeIndex) && total > 1
-            ? `第 ${item.episodeIndex + 1}${total ? '/' + total : ''} 集`
-            : (total > 1 ? `共 ${total} 集` : '');
-        const meta = [epText, item.sourceName || ''].filter(Boolean).join(' · ');
-        card.appendChild(h('div', 'cw-meta', meta || '\u00a0'));
-
-        const pos = Number(item.playbackPosition) || 0;
-        const dur = Number(item.duration) || 0;
-        const bar = h('div', 'cw-bar');
-        const fill = h('div', '');
-        const pct = dur > 0 ? Math.min(100, Math.max(0, Math.round(pos / dur * 100))) : 0;
-        fill.style.width = pct + '%';
-        bar.appendChild(fill);
-        card.appendChild(bar);
-        card.title = dur > 0 && pos > 0
-            ? `${item.title} · 已看 ${pct}%，点击继续`
-            : `${item.title} · 点击继续`;
-
-        card.addEventListener('click', () => {
-            playFromHistory(item.url, item.title, Number(item.episodeIndex) || 0, pos);
-        });
-        list.appendChild(card);
-    });
-    wrap.classList.remove('hidden');
-}
-
 function playVideo(url, vod_name, sourceCode, episodeIndex = 0, vodId = '') {
     // 返回地址：当前页面（含搜索参数）
     const returnUrl = window.location.href;
