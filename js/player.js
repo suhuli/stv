@@ -480,6 +480,7 @@ function initPlayer(videoUrl) {
 
                 // 跟踪是否已经显示错误
                 let errorDisplayed = false;
+                let fatalNetworkErrors = 0;
                 // 跟踪是否有错误发生
                 let errorCount = 0;
                 // 跟踪视频是否开始播放
@@ -571,7 +572,16 @@ function initPlayer(videoUrl) {
                         // 尝试恢复错误
                         switch (data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
-                                hls.startLoad();
+                                // hls.js 内部已重试过才会报 fatal；再给一次机会，仍失败则判定源不可用（触发自动换源）
+                                fatalNetworkErrors++;
+                                if (fatalNetworkErrors >= 2) {
+                                    if (!errorDisplayed) {
+                                        errorDisplayed = true;
+                                        showError('视频源无法访问');
+                                    }
+                                } else {
+                                    hls.startLoad();
+                                }
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
                                 hls.recoverMediaError();
