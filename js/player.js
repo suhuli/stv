@@ -574,7 +574,9 @@ function initPlayer(videoUrl) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
                                 // hls.js 内部已重试过才会报 fatal；再给一次机会，仍失败则判定源不可用（触发自动换源）
                                 fatalNetworkErrors++;
-                                if (fatalNetworkErrors >= 2) {
+                                // 主列表都拉不到（hls.js 内部已按 manifestLoadingMaxRetry 重试过）直接判失败；
+                                // 其他网络错误再手动重试一次
+                                if (fatalNetworkErrors >= 2 || /^manifest/.test(data.details || '')) {
                                     if (!errorDisplayed) {
                                         errorDisplayed = true;
                                         showError('视频源无法访问');
