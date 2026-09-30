@@ -491,6 +491,10 @@ function initPlayer(videoUrl) {
                 // 监听视频播放事件
                 video.addEventListener('playing', function () {
                     playbackStarted = true;
+                    if (window.LastGoodSource) {
+                        const src = new URLSearchParams(window.location.search).get('source');
+                        if (src) LastGoodSource.set(currentVideoTitle, src);
+                    }
                     document.getElementById('player-loading').style.display = 'none';
                     document.getElementById('error').style.display = 'none';
                     preloadNextEpisode();

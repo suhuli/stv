@@ -154,3 +154,25 @@
     }
     window.WatchedEpisodes = { get, mark, isWatched, titleKey };
 })();
+
+
+// ================= 上次播放成功的源 =================
+// localStorage 'lastGoodSource' = { <标题键>: { source, at } }，选源面板据此标注「上次可播」并排在最前。
+(function () {
+    const KEY = 'lastGoodSource';
+    const MAX = 300;
+    const titleKey = (t) => String(t || '').replace(/\s+/g, '').toLowerCase();
+    function readAll() { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (_) { return {}; } }
+    function set(title, source) {
+        const k = titleKey(title);
+        if (!k || !source) return;
+        const all = readAll();
+        delete all[k];
+        all[k] = { source: String(source), at: Date.now() };
+        const keys = Object.keys(all);
+        if (keys.length > MAX) keys.slice(0, keys.length - MAX).forEach(x => delete all[x]);
+        try { localStorage.setItem(KEY, JSON.stringify(all)); } catch (_) { /* 忽略 */ }
+    }
+    function get(title) { const e = readAll()[titleKey(title)]; return e ? e.source : ''; }
+    window.LastGoodSource = { get, set };
+})();

@@ -871,23 +871,49 @@ function showSourcePicker(group) {
     modalTitle.appendChild(h('span', 'text-sm font-normal text-gray-400 ml-2', `选择播放源（${group.items.length}）`));
 
     modalContent.textContent = '';
-    const tip = h('p', 'text-xs text-gray-500 mb-3', '同一部影片在多个源都有收录，请选择一个源查看剧集。绿点表示巡检可用，黄点表示海外巡检受限（国内网络可能正常）。');
+    const tip = h('p', 'text-xs text-gray-500 mb-3', '同一部影片在多个源都有收录，已按可用性排序：「上次可播」是你上次成功播放的源；「海外受限」表示巡检节点在海外拉不到片源，国内网络通常正常。');
     modalContent.appendChild(tip);
 
     const list = h('div', 'grid grid-cols-1 sm:grid-cols-2 gap-2');
-    const ordered = window.SourceHealth
-        ? [...group.items].sort((a, b) => {
-            const rank = { ok: 0, unknown: 1, api_only: 2, down: 3 };
-            return rank[SourceHealth.status(a.source_code)] - rank[SourceHealth.status(b.source_code)];
-        })
-        : group.items;
+    const title0 = group.items[0].vod_name || '';
+    const lastGood = window.LastGoodSource ? LastGoodSource.get(title0) : '';
+    const rank = { ok: 0, unknown: 1, api_only: 2, down: 3 };
+    const statusOf = (k) => (window.SourceHealth ? SourceHealth.status(k) : 'unknown');
+    const latencyOf = (k) => {
+        const e = window.SourceHealth && SourceHealth.data && SourceHealth.data.sources ? SourceHealth.data.sources[k] : null;
+        return e && e.latency != null ? e.latency : 99999;
+    };
+    // 排序：上次可播的源 → 巡检可播且快的 → 未知 → 受限 → 异常
+    const ordered = [...group.items].sort((a, b) => {
+        if (a.source_code === lastGood) return -1;
+        if (b.source_code === lastGood) return 1;
+        const r = rank[statusOf(a.source_code)] - rank[statusOf(b.source_code)];
+        return r !== 0 ? r : latencyOf(a.source_code) - latencyOf(b.source_code);
+    });
+    const STATUS_PILL = {
+        ok: ['可播', 'bg-green-500/15 text-green-400 border-green-500/30'],
+        api_only: ['海外受限', 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30'],
+        down: ['异常', 'bg-red-500/15 text-red-400 border-red-500/30'],
+        unknown: ['未巡检', 'bg-gray-500/15 text-gray-400 border-gray-500/30']
+    };
+    let recommended = false;
 
     ordered.forEach(it => {
-        const btn = h('button', 'text-left p-3 bg-[#1a1a1a] hover:bg-[#252525] border border-[#333] hover:border-[#555] rounded-lg transition-colors');
+        const st = statusOf(it.source_code);
+        const isLast = it.source_code === lastGood;
+        const isRec = !recommended && (isLast || st === 'ok');
+        if (isRec) recommended = true;
+        const btn = h('button', `text-left p-3 bg-[#1a1a1a] hover:bg-[#252525] border ${isRec ? 'border-blue-500/60' : 'border-[#333]'} hover:border-[#555] rounded-lg transition-colors`);
         const head = h('div', 'flex items-center justify-between gap-2');
-        const nameWrap = h('div', 'flex items-center min-w-0');
+        const nameWrap = h('div', 'flex items-center gap-1.5 min-w-0 flex-wrap');
         nameWrap.appendChild(h('span', 'font-medium truncate', it.source_name || it.source_code || '未知源'));
-        if (window.SourceHealth) nameWrap.appendChild(SourceHealth.badge(it.source_code));
+        const pill = STATUS_PILL[st] || STATUS_PILL.unknown;
+        const lat = latencyOf(it.source_code);
+        const pillEl = h('span', `text-[10px] leading-none px-1.5 py-0.5 rounded border ${pill[1]} flex-shrink-0`, pill[0] + (lat < 99999 ? ` ${lat}ms` : ''));
+        pillEl.title = window.SourceHealth ? SourceHealth.badge(it.source_code).title : '';
+        nameWrap.appendChild(pillEl);
+        if (isLast) nameWrap.appendChild(h('span', 'text-[10px] leading-none px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 flex-shrink-0', '上次可播'));
+        else if (isRec) nameWrap.appendChild(h('span', 'text-[10px] leading-none px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 flex-shrink-0', '推荐'));
         head.appendChild(nameWrap);
         if (it.vod_year) head.appendChild(h('span', 'text-xs text-gray-500 flex-shrink-0', it.vod_year));
         btn.appendChild(head);
