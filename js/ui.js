@@ -143,6 +143,17 @@ function updateSiteStatus(isAvailable) {
     }
 }
 
+// Esc：依次关闭详情弹窗、历史面板、设置面板
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    const modal = document.getElementById('modal');
+    if (modal && !modal.classList.contains('hidden')) { closeModal(); return; }
+    const history = document.getElementById('historyPanel');
+    if (history && history.classList.contains('show')) { toggleHistory(); return; }
+    const settings = document.getElementById('settingsPanel');
+    if (settings && settings.classList.contains('show')) { toggleSettings(); }
+});
+
 function closeModal() {
     document.getElementById('modal').classList.add('hidden');
     // 清除 iframe 内容
@@ -700,12 +711,24 @@ async function playFromHistory(url, title, episodeIndex, playbackPosition = 0) {
             playerUrl += (playerUrl.includes('?') ? '&' : '?') + 'sid=' + encodeURIComponent(session.id);
         }
 
-        showVideoPlayer(playerUrl);
+        openPlayerPage(playerUrl);
     } catch (e) {
         // console.error('从历史记录播放失败:', e);
         const simpleUrl = `player?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}&index=${episodeIndex}`;
-        showVideoPlayer(simpleUrl);
+        openPlayerPage(simpleUrl);
     }
+}
+
+// 打开播放页：始终整页跳转（旧版用 iframe 叠层，返回键会把首页套进 iframe 里）
+function openPlayerPage(playerUrl) {
+    const target = new URL(playerUrl, window.location.origin).toString();
+    try {
+        if (window.top && window.top !== window.self) {
+            window.top.location.href = target;
+            return;
+        }
+    } catch (_) { /* 跨域 iframe 时退回本窗口跳转 */ }
+    window.location.href = target;
 }
 
 // 添加观看历史 - 确保每个视频标题只有一条记录

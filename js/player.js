@@ -1878,6 +1878,8 @@ function armPlaybackWatchdog(ms) {
         if (!art || !art.video) return;
         if (art.video.currentTime > 0.5 || art.video.readyState >= 3) return;
         if (window.isSwitchingVideo) return;
+        const modal = document.getElementById('modal');
+        if (modal && !modal.classList.contains('hidden')) return; // 用户正在手动选源/看详情
         console.warn('播放超时，尝试自动换源');
         tryAutoSwitchSource('timeout');
     }, ms);

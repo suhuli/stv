@@ -72,7 +72,9 @@ export async function onRequest(context) {
     if (!targetUrl) {
         return errorResponse('无效的代理请求。路径应为 /proxy/<经过编码的URL>', 400);
     }
-    const blocked = isBlockedTarget(targetUrl);
+    let blocked = isBlockedTarget(targetUrl);
+    // 禁止代理自身（避免 /proxy/ 套 /proxy/ 的递归循环）
+    try { if (!blocked && new URL(targetUrl).hostname.toLowerCase() === url.hostname.toLowerCase()) blocked = '不能代理本站'; } catch (_) { /* 忽略 */ }
     if (blocked) {
         return errorResponse(`拒绝代理该地址: ${blocked}`, 403);
     }
