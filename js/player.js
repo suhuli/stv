@@ -227,6 +227,7 @@ function initializePageContent() {
     // 初始化播放器
     if (videoUrl) {
         initPlayer(videoUrl);
+        armPlaybackWatchdog(25000);
     } else {
         showError('无效的视频链接');
     }
@@ -729,6 +730,7 @@ function initPlayer(videoUrl) {
     // 视频播放结束事件
     art.on('video:ended', function () {
         videoHasEnded = true;
+        if (window.WatchedEpisodes) WatchedEpisodes.mark(currentVideoTitle, currentEpisodeIndex);
 
         clearVideoProgress();
 
@@ -841,6 +843,10 @@ function showError(message) {
     if (art && art.video && art.video.currentTime > 1) {
         return;
     }
+    // 播放尚未开始就失败：先尝试自动切换到其他源，成功切换时不显示错误
+    if (tryAutoSwitchSource(message)) {
+        return;
+    }
     const loadingEl = document.getElementById('player-loading');
     if (loadingEl) loadingEl.style.display = 'none';
     const errorEl = document.getElementById('error');
@@ -897,17 +903,19 @@ function renderEpisodes() {
     }
 
     const episodes = episodesReversed ? [...currentEpisodes].reverse() : currentEpisodes;
+    const watched = window.WatchedEpisodes ? WatchedEpisodes.get(currentVideoTitle) : new Set();
     let html = '';
 
     episodes.forEach((episode, index) => {
         // 根据倒序状态计算真实的剧集索引
         const realIndex = episodesReversed ? currentEpisodes.length - 1 - index : index;
         const isActive = realIndex === currentEpisodeIndex;
+        const isWatched = !isActive && watched.has(realIndex);
 
         html += `
             <button id="episode-${realIndex}" 
-                    onclick="playEpisode(${realIndex})" 
-                    class="px-4 py-2 ${isActive ? 'episode-active' : '!bg-[#222] hover:!bg-[#333] hover:!shadow-none'} !border ${isActive ? '!border-blue-500' : '!border-[#333]'} rounded-lg transition-colors text-center episode-btn">
+                    onclick="playEpisode(${realIndex})" ${isWatched ? 'title="已看过"' : ''}
+                    class="px-4 py-2 ${isActive ? 'episode-active' : '!bg-[#222] hover:!bg-[#333] hover:!shadow-none'} !border ${isActive ? '!border-blue-500' : '!border-[#333]'} rounded-lg transition-colors text-center episode-btn${isWatched ? ' episode-watched' : ''}">
                 ${realIndex + 1}
             </button>
         `;
@@ -1275,6 +1283,10 @@ function saveCurrentProgress() {
         duration: duration,
         timestamp: Date.now()
     };
+    // 已看标记：看满 60 秒或 10%
+    if (window.WatchedEpisodes && (currentTime >= 60 || currentTime >= duration * 0.1)) {
+        WatchedEpisodes.mark(currentVideoTitle, currentEpisodeIndex);
+    }
     try {
         localStorage.setItem(progressKey, JSON.stringify(progressData));
         // --- 新增：同步更新 viewingHistory 中的进度 ---
@@ -1748,6 +1760,114 @@ async function showSwitchResourceModal() {
 }
 
 // 切换资源的函数
+// ================= 播放失败自动换源 =================
+// 触发时机：播放开始前出现致命错误（showError），或加载超时。
+// 逻辑：在其他已选源中搜索同名影片 → 取详情 → 选出集数足够的第一个源 → 用 switchToResource 切换（沿用集数与进度）。
+// 已尝试过的源记录在 sessionStorage，避免在多个坏源之间来回跳。
+let autoSwitchInProgress = false;
+
+function autoSwitchTriedKey() {
+    return 'autoSwitchTried:' + (currentVideoTitle || '');
+}
+
+function tryAutoSwitchSource(reason) {
+    if (autoSwitchInProgress) return true;
+    if (localStorage.getItem('autoSwitchSourceEnabled') === 'false') return false;
+    if (!currentVideoTitle || typeof searchByAPIAndKeyWord !== 'function') return false;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentSource = urlParams.get('source') || '';
+    let tried = [];
+    try { tried = JSON.parse(sessionStorage.getItem(autoSwitchTriedKey()) || '[]'); } catch (_) { tried = []; }
+    if (currentSource && !tried.includes(currentSource)) tried.push(currentSource);
+    try { sessionStorage.setItem(autoSwitchTriedKey(), JSON.stringify(tried)); } catch (_) { /* 忽略 */ }
+
+    let pool = Array.isArray(selectedAPIs) && selectedAPIs.length
+        ? selectedAPIs.slice()
+        : Object.keys(API_SITES).filter(k => !API_SITES[k].adult);
+    pool = pool.filter(k => !tried.includes(k) && (k.startsWith('custom_') || API_SITES[k]));
+    if (pool.length === 0) return false;
+
+    autoSwitchInProgress = true;
+    runAutoSwitch(pool, tried, reason).catch(err => {
+        console.warn('自动换源失败:', err);
+        autoSwitchInProgress = false;
+        showError('视频加载失败，且自动换源未成功');
+    });
+    return true;
+}
+
+async function runAutoSwitch(pool, tried, reason) {
+    const errorEl = document.getElementById('error');
+    if (errorEl) errorEl.style.display = 'none';
+    const loadingEl = document.getElementById('player-loading');
+    if (loadingEl) {
+        loadingEl.style.display = 'flex';
+        const txt = loadingEl.querySelector('.loading-text, span, div:last-child');
+        if (txt) txt.textContent = '当前源加载失败，正在自动切换…';
+    }
+    showToast('当前源播放失败，正在为你自动切换其他源…', 'warning');
+
+    // 按巡检健康度排序候选源（有数据时）
+    if (window.SourceHealth) {
+        try { await SourceHealth.load(1500); } catch (_) { /* 忽略 */ }
+        if (SourceHealth.data) pool = SourceHealth.sortByHealth(pool);
+    }
+
+    // 并行搜索，按顺序挑第一个同名且集数足够的源
+    const title = currentVideoTitle;
+    const norm = (t) => String(t || '').replace(/\s+/g, '').toLowerCase();
+    const results = await Promise.all(pool.map(k => searchByAPIAndKeyWord(k, title).catch(() => [])));
+
+    for (let i = 0; i < pool.length; i++) {
+        const key = pool[i];
+        const list = results[i] || [];
+        const match = list.find(r => norm(r.vod_name) === norm(title));
+        if (!match) continue;
+
+        // 取详情，确认该源有当前这一集
+        let apiParams = '&source=' + key;
+        if (key.startsWith('custom_')) {
+            const customApi = getCustomApiInfo(key.replace('custom_', ''));
+            if (!customApi) continue;
+            apiParams = '&customApi=' + encodeURIComponent(customApi.url) +
+                (customApi.detail ? '&customDetail=' + encodeURIComponent(customApi.detail) : '') + '&source=custom';
+        }
+        try {
+            const resp = await fetch(`/api/detail?id=${encodeURIComponent(match.vod_id)}${apiParams}&_t=${Date.now()}`);
+            const data = await resp.json();
+            const eps = Array.isArray(data.episodes) ? data.episodes : [];
+            if (eps.length === 0) continue;
+            if (currentEpisodes.length > 1 && eps.length <= currentEpisodeIndex) continue;
+        } catch (_) {
+            continue;
+        }
+
+        tried.push(key);
+        try { sessionStorage.setItem(autoSwitchTriedKey(), JSON.stringify(tried)); } catch (_) { /* 忽略 */ }
+        const name = key.startsWith('custom_') ? '自定义源' : (API_SITES[key] ? API_SITES[key].name : key);
+        showToast(`已切换到「${name}」`, 'success');
+        await switchToResource(key, String(match.vod_id));
+        return;
+    }
+
+    // 没有可用源
+    autoSwitchInProgress = false;
+    if (loadingEl) loadingEl.style.display = 'none';
+    showError('已尝试所有可用源，均无法播放本集');
+}
+
+// 加载看门狗：初始化后一段时间仍未开始播放，则视为失败触发自动换源
+function armPlaybackWatchdog(ms) {
+    setTimeout(() => {
+        if (!art || !art.video) return;
+        if (art.video.currentTime > 0.5 || art.video.readyState >= 3) return;
+        if (window.isSwitchingVideo) return;
+        console.warn('播放超时，尝试自动换源');
+        tryAutoSwitchSource('timeout');
+    }, ms);
+}
+
 async function switchToResource(sourceKey, vodId) {
     // 关闭模态框
     document.getElementById('modal').classList.add('hidden');
@@ -1828,6 +1948,7 @@ async function switchToResource(sourceKey, vodId) {
         
     } catch (error) {
         console.error('切换资源失败:', error);
+        autoSwitchInProgress = false;
         showToast('切换资源失败，请稍后重试', 'error');
     } finally {
         hideLoading();

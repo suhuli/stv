@@ -115,3 +115,42 @@
 
     window.PlaySession = { create, get, update, buildPlayerUrl, setReturnUrl, getReturnUrl, cleanupLegacyKeys };
 })();
+
+
+// ================= 已看剧集标记 =================
+// localStorage 'watchedEpisodes' = { <标题键>: [集索引...] }，跨源共用（按片名归一）。
+(function () {
+    const KEY = 'watchedEpisodes';
+    const MAX_TITLES = 300;
+    function titleKey(title) {
+        return String(title || '').replace(/\s+/g, '').toLowerCase();
+    }
+    function readAll() {
+        try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (_) { return {}; }
+    }
+    function writeAll(obj) {
+        try { localStorage.setItem(KEY, JSON.stringify(obj)); } catch (_) { /* 配额满时忽略 */ }
+    }
+    function get(title) {
+        const list = readAll()[titleKey(title)];
+        return new Set(Array.isArray(list) ? list : []);
+    }
+    function mark(title, index) {
+        const k = titleKey(title);
+        if (!k || !Number.isInteger(index) || index < 0) return;
+        const all = readAll();
+        const set = new Set(Array.isArray(all[k]) ? all[k] : []);
+        if (set.has(index)) return;
+        set.add(index);
+        // 删除后重插，保证最近使用的在末尾；超量时淘汰最早的
+        delete all[k];
+        all[k] = [...set].sort((a, b) => a - b);
+        const keys = Object.keys(all);
+        if (keys.length > MAX_TITLES) keys.slice(0, keys.length - MAX_TITLES).forEach(x => delete all[x]);
+        writeAll(all);
+    }
+    function isWatched(title, index) {
+        return get(title).has(index);
+    }
+    window.WatchedEpisodes = { get, mark, isWatched, titleKey };
+})();
