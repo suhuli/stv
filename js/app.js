@@ -905,8 +905,8 @@ function showSourcePicker(group) {
         if (isRec) recommended = true;
         const btn = h('button', `text-left p-3 bg-[#1a1a1a] hover:bg-[#252525] border ${isRec ? 'border-blue-500/60' : 'border-[#333]'} hover:border-[#555] rounded-lg transition-colors`);
         const head = h('div', 'flex items-center justify-between gap-2');
-        const nameWrap = h('div', 'flex items-center gap-1.5 min-w-0 flex-wrap');
-        nameWrap.appendChild(h('span', 'font-medium truncate', it.source_name || it.source_code || '未知源'));
+        const nameWrap = h('div', 'flex items-center gap-2 min-w-0 flex-wrap');
+        nameWrap.appendChild(h('span', 'font-medium truncate mr-1', it.source_name || it.source_code || '未知源'));
         const pill = STATUS_PILL[st] || STATUS_PILL.unknown;
         const lat = latencyOf(it.source_code);
         const pillEl = h('span', `text-[10px] leading-none px-1.5 py-0.5 rounded border ${pill[1]} flex-shrink-0`, pill[0] + (lat < 99999 ? ` ${lat}ms` : ''));
