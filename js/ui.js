@@ -392,7 +392,20 @@ function formatTimestamp(timestamp) {
 function getViewingHistory() {
     try {
         const data = localStorage.getItem('viewingHistory');
-        return data ? JSON.parse(data) : [];
+        const list = data ? JSON.parse(data) : [];
+        // 同一部片（按片名，不区分来源）只显示最近一条
+        const seen = new Set();
+        const deduped = [];
+        for (const item of Array.isArray(list) ? list : []) {
+            const key = String(item && item.title || '').replace(/\s+/g, '').toLowerCase();
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
+            deduped.push(item);
+        }
+        if (deduped.length !== list.length) {
+            try { localStorage.setItem('viewingHistory', JSON.stringify(deduped)); } catch (_) { /* 忽略 */ }
+        }
+        return deduped;
     } catch (e) {
         console.error('获取观看历史失败:', e);
         return [];

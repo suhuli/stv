@@ -1177,12 +1177,13 @@ function saveToHistory() {
     try {
         const history = JSON.parse(localStorage.getItem('viewingHistory') || '[]');
 
-        // 检查是否已经存在相同的系列记录 (基于标题、来源和 showIdentifier)
-        const existingIndex = history.findIndex(item => 
-            item.title === videoInfo.title && 
-            item.sourceName === videoInfo.sourceName && 
-            item.showIdentifier === videoInfo.showIdentifier
-        );
+        // 同一部片只保留一条记录（按片名匹配，不区分来源）：换源后更新为当前源
+        const sameTitle = (a, b) => String(a || '').replace(/\s+/g, '').toLowerCase() === String(b || '').replace(/\s+/g, '').toLowerCase();
+        const existingIndex = history.findIndex(item => sameTitle(item.title, videoInfo.title));
+        // 清理旧版本留下的同名重复项（保留第一条，即最近的一条）
+        for (let i = history.length - 1; i > existingIndex && existingIndex !== -1; i--) {
+            if (sameTitle(history[i].title, videoInfo.title)) history.splice(i, 1);
+        }
 
         if (existingIndex !== -1) {
             // 存在则更新现有记录的当前集数、时间戳、播放进度和URL等
@@ -1192,6 +1193,8 @@ function saveToHistory() {
             existingItem.sourceName = videoInfo.sourceName; // Should be consistent, but update just in case
             existingItem.sourceCode = videoInfo.sourceCode;
             existingItem.vod_id = videoInfo.vod_id;
+            existingItem.showIdentifier = videoInfo.showIdentifier;
+            existingItem.sid = videoInfo.sid || existingItem.sid;
             
             // Update URLs to reflect the current episode being watched
             existingItem.directVideoUrl = videoInfo.directVideoUrl; // Current episode's direct URL

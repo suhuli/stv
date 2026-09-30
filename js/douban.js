@@ -2,7 +2,7 @@
 
 // 豆瓣标签列表 - 修改为默认标签
 let defaultMovieTags = ['热门', '最新', '经典', '豆瓣高分', '冷门佳片', '华语', '欧美', '韩国', '日本', '动作', '喜剧', '日综', '爱情', '科幻', '悬疑', '恐怖', '治愈'];
-let defaultTvTags = ['热门', '美剧', '英剧', '韩剧', '日剧', '国产剧', '港剧', '日本动画', '综艺', '纪录片'];
+let defaultTvTags = ['热门', '综艺', '美剧', '英剧', '韩剧', '日剧', '国产剧', '港剧', '日本动画', '纪录片'];
 
 // 用户标签列表 - 存储用户实际使用的标签（包含保留的系统标签和用户添加的自定义标签）
 let movieTags = [];
@@ -29,12 +29,24 @@ function loadUserTags() {
             // 否则使用默认标签
             tvTags = [...defaultTvTags];
         }
+        tvTags = normalizeTvTags(tvTags);
     } catch (e) {
         console.error('加载标签失败：', e);
         // 初始化为默认值，防止错误
         movieTags = [...defaultMovieTags];
         tvTags = [...defaultTvTags];
     }
+}
+
+// 电视剧标签整理：豆瓣的 tv 分类没有「最新」（接口返回空），去掉；「综艺」固定排在「热门」之后
+function normalizeTvTags(tags) {
+    const list = (Array.isArray(tags) ? tags : []).filter(t => t && t !== '最新');
+    const i = list.indexOf('综艺');
+    if (i > 1) {
+        list.splice(i, 1);
+        list.splice(list[0] === '热门' ? 1 : 0, 0, '综艺');
+    }
+    return list;
 }
 
 // 保存用户标签
