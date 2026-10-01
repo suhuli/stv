@@ -275,6 +275,13 @@ function handleKeyboardShortcuts(e) {
     // 忽略输入框中的按键事件
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
+    // Esc：先取消下一集倒计时
+    if (e.key === 'Escape' && nextCountdownTimer) {
+        cancelNextCountdown('已取消');
+        e.preventDefault();
+        return;
+    }
+
     // Alt + 左箭头 = 上一集
     if (e.altKey && e.key === 'ArrowLeft') {
         if (currentEpisodeIndex > 0) {
@@ -674,9 +681,24 @@ function initPlayer(videoUrl) {
         index: 25,
         tooltip: '下一集',
         html: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M6 6.5v11c0 .8.9 1.3 1.6.8l8-5.5a1 1 0 0 0 0-1.6l-8-5.5C6.9 5.2 6 5.7 6 6.5z"/><rect x="17" y="6" width="2" height="12" rx="1"/></svg>',
-        click: function () { playNextEpisode(); },
+        click: function () { requestNextEpisode(); },
     });
     updateNextEpisodeControl();
+
+    // 下一集倒计时提示层（放在播放器内部，全屏时也能看到）
+    art.layers.add({
+        name: 'nextCountdown',
+        html: '<div class="next-countdown">' +
+            '<div class="next-countdown-text"><span class="next-countdown-icon">⏭</span> <span class="next-countdown-label"></span></div>' +
+            '<button type="button" class="next-countdown-cancel">取消</button>' +
+            '<div class="next-countdown-bar"><div class="next-countdown-bar-inner"></div></div>' +
+            '</div>',
+        style: { display: 'none', pointerEvents: 'none' },
+    });
+    art.layers.nextCountdown.querySelector('.next-countdown-cancel').addEventListener('click', function (e) {
+        e.stopPropagation();
+        cancelNextCountdown('已取消');
+    });
 
     // 播放器加载完成后初始隐藏工具栏
     art.on('ready', () => {
@@ -963,6 +985,7 @@ function renderEpisodes() {
 
 // 播放指定集数
 function playEpisode(index) {
+    cancelNextCountdown();
     // 确保index在有效范围内
     if (index < 0 || index >= currentEpisodes.length) {
         return;
@@ -1035,6 +1058,50 @@ function playPreviousEpisode() {
     if (currentEpisodeIndex > 0) {
         playEpisode(currentEpisodeIndex - 1);
     }
+}
+
+// ---- 下一集倒计时（控制条按钮防误触：点一下 3 秒后切，期间可取消；再点一次立即切）----
+const NEXT_COUNTDOWN_SECONDS = 3;
+let nextCountdownTimer = null;
+let nextCountdownTick = null;
+
+function requestNextEpisode() {
+    if (currentEpisodeIndex >= currentEpisodes.length - 1) return;
+    if (nextCountdownTimer) {
+        // 倒计时中再点一次：不等了，立即切
+        cancelNextCountdown();
+        playNextEpisode();
+        return;
+    }
+    const layer = art && art.layers && art.layers.nextCountdown;
+    if (!layer) { playNextEpisode(); return; }
+    const label = layer.querySelector('.next-countdown-label');
+    const bar = layer.querySelector('.next-countdown-bar-inner');
+    const nextNo = currentEpisodeIndex + 2;
+    let remain = NEXT_COUNTDOWN_SECONDS;
+    const render = () => { label.textContent = remain + ' 秒后播放第 ' + nextNo + ' 集'; };
+    render();
+    layer.style.display = '';
+    // 进度线：下一帧开始从 100% 缩到 0
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        bar.style.transition = 'width ' + NEXT_COUNTDOWN_SECONDS + 's linear';
+        bar.style.width = '0%';
+    }));
+    nextCountdownTick = setInterval(() => { remain = Math.max(0, remain - 1); render(); }, 1000);
+    nextCountdownTimer = setTimeout(() => {
+        cancelNextCountdown();
+        playNextEpisode();
+    }, NEXT_COUNTDOWN_SECONDS * 1000);
+}
+
+function cancelNextCountdown(message) {
+    if (nextCountdownTimer) { clearTimeout(nextCountdownTimer); nextCountdownTimer = null; }
+    if (nextCountdownTick) { clearInterval(nextCountdownTick); nextCountdownTick = null; }
+    const layer = art && art.layers && art.layers.nextCountdown;
+    if (layer) layer.style.display = 'none';
+    if (message) showToast(message, 'info');
 }
 
 // 播放下一集

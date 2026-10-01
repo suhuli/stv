@@ -393,3 +393,51 @@ input:checked + .slider:before {
 #username {
     display: none !important;
 }
+
+/* 下一集倒计时提示（播放器内部图层，底部居中、控制条上方） */
+.art-layer-nextCountdown {
+    position: absolute;
+    left: 0; right: 0; bottom: 64px;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 60;
+}
+.next-countdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px 14px 16px;
+    background: rgba(0, 0, 0, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 15px;
+    overflow: hidden;
+    pointer-events: auto;
+    backdrop-filter: blur(4px);
+}
+.next-countdown-icon { color: #23ade5; margin-right: 2px; }
+.next-countdown-cancel {
+    padding: 5px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+}
+.next-countdown-cancel:hover,
+.next-countdown-cancel:active { background: rgba(255, 255, 255, 0.2); }
+.next-countdown-bar {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.12);
+}
+.next-countdown-bar-inner { height: 100%; width: 100%; background: #23ade5; }
+@media (max-width: 640px) {
+    .art-layer-nextCountdown { bottom: 56px; }
+    .next-countdown { font-size: 14px; gap: 10px; padding: 8px 10px 12px 12px; }
+}
