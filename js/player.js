@@ -667,6 +667,17 @@ function initPlayer(videoUrl) {
         }
     }
 
+    // 控制条「下一集」按钮：放在设置齿轮(30)左边、截图(20)右边；最后一集/单集时隐藏
+    art.controls.add({
+        name: 'nextEpisode',
+        position: 'right',
+        index: 25,
+        tooltip: '下一集',
+        html: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M6 6.5v11c0 .8.9 1.3 1.6.8l8-5.5a1 1 0 0 0 0-1.6l-8-5.5C6.9 5.2 6 5.7 6 6.5z"/><rect x="17" y="6" width="2" height="12" rx="1"/></svg>',
+        click: function () { playNextEpisode(); },
+    });
+    updateNextEpisodeControl();
+
     // 播放器加载完成后初始隐藏工具栏
     art.on('ready', () => {
         hideControls();
@@ -880,8 +891,18 @@ function updateEpisodeInfo() {
     }
 }
 
+// 控制条里的「下一集」按钮显隐：还有下一集才显示
+function updateNextEpisodeControl() {
+    if (!art || !art.controls) return;
+    const el = art.controls.nextEpisode;
+    if (!el) return;
+    const hasNext = currentEpisodes.length > 1 && currentEpisodeIndex < currentEpisodes.length - 1;
+    el.style.display = hasNext ? '' : 'none';
+}
+
 // 更新按钮状态
 function updateButtonStates() {
+    updateNextEpisodeControl();
     const prevButton = document.getElementById('prevButton');
     const nextButton = document.getElementById('nextButton');
 
