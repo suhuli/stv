@@ -30,4 +30,4 @@
 # Cloudflare 会缓存 103 提示，因此这里只放不带版本号、长期不变的第三方库；
 # 带 ?v= 的站内 css/js 不放，否则发版后一段时间内会预加载到旧版本文件。
 /player
-  Link: </libs/hls.min.js>; rel=preload; as=script; crossorigin, </libs/artplayer.min.js>; rel=preload; as=script; crossorigin
+  Link: </libs/hls-1.7.3.min.js>; rel=preload; as=script; crossorigin, </libs/artplayer.min.js>; rel=preload; as=script; crossorigin

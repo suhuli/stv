@@ -423,7 +423,7 @@
             var appScript = document.querySelector('script[src*="js/app.js"]');
             var ver = appScript && /[?&]v=([^&]+)/.exec(appScript.getAttribute('src') || '');
             var v = ver ? ver[1] : '';
-            var files = ['libs/hls.min.js', 'libs/artplayer.min.js', 'css/player.css'];
+            var files = ['libs/hls-1.7.3.min.js', 'libs/artplayer.min.js', 'css/player.css'];
             var warm = function () {
                 files.forEach(function (f) {
                     var q = (f.indexOf('libs/') === 0 || !v) ? '' : '?v=' + v;   // 第三方库不带版本号
