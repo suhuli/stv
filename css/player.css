@@ -418,7 +418,8 @@ input:checked + .slider:before {
     pointer-events: auto;
     backdrop-filter: blur(4px);
 }
-.next-countdown-icon { color: #23ade5; margin-right: 2px; }
+.next-countdown-text { display: flex; align-items: center; gap: 8px; }
+.next-countdown-icon { color: #23ade5; flex-shrink: 0; }
 .next-countdown-cancel {
     padding: 5px 14px;
     border-radius: 6px;

@@ -689,7 +689,7 @@ function initPlayer(videoUrl) {
     art.layers.add({
         name: 'nextCountdown',
         html: '<div class="next-countdown">' +
-            '<div class="next-countdown-text"><span class="next-countdown-icon">⏭</span> <span class="next-countdown-label"></span></div>' +
+            '<div class="next-countdown-text"><svg class="next-countdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 6.5v11c0 .8.9 1.3 1.6.8l8-5.5a1 1 0 0 0 0-1.6l-8-5.5C6.9 5.2 6 5.7 6 6.5z"/><rect x="17" y="6" width="2" height="12" rx="1"/></svg><span class="next-countdown-label"></span></div>' +
             '<button type="button" class="next-countdown-cancel">取消</button>' +
             '<div class="next-countdown-bar"><div class="next-countdown-bar-inner"></div></div>' +
             '</div>',
